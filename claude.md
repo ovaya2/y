@@ -219,12 +219,3 @@ return WithConnectionAsync(async conn => { ... });
 | `#endregion` nach Klasse in `MainViewModel.cs` | Niedrig |
 | `ovanot/tmp.cs` als `<Compile>` im .csproj | Niedrig |
 | Fehlende Indizes auf `sta_id`, `erledigt` | Niedrig |
-
----
-
-## 8. Reference
-
-- DB-Schema vollständig: `docs/schema.md`
-- Implementierungsstand + Roadmap: `docs/state.md`
-- Bugfix-Workflow: `docs/prompts/bugfix.md`
-- Strukturierungs-Guide: `docs/prompts/struktur.md`
