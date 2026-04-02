@@ -1,5 +1,3 @@
-## Azubi <--> Ausbilder
-
 ## Azubi <--> KI / Projekt
 
 ```mermaid
