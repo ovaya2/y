@@ -1,44 +1,5 @@
 ## Azubi <--> Ausbilder
 
-```mermaid
-%% Datum: 2026-04-02
-%% Version: 1.0
-%% Dateiname: kommunikation_azubi_ausbilder_ki.mermaid
-%% Chat-ID: N/A
-
-sequenceDiagram
-    participant Azubi
-    participant KM as Kommunikationsmodul
-    participant KI as KI-Schnittstelle
-    participant Ausbilder
-
-    Note over Azubi, Ausbilder:  Zyklus: Status, Forschritt & Roadmap
-
-    rect rgb(50, 50, 0)
-    Note right of Azubi: Dokumentation & Abfrage
-    Azubi->>KM: Input: Aktueller Status & Fortschritt
-    KM->>KI: Daten zur Analyse senden
-    KI-->KM: Feedback / Optimierungsvorschläge
-    KM-->>Azubi: Visualisierte Roadmap & KI-Tipps
-    end
-
-    rect rgb(0, 50, 0)
-    Note right of Ausbilder: Review & Steuerung
-    Ausbilder->>KM: Abruf Projekt-Dashboard
-    KM-->>Ausbilder: Statusbericht & KI-Prognose
-    Ausbilder->>KM: Feedback / Freigabe Roadmap
-    KM-->>Azubi: Benachrichtigung: Neues Feedback
-    end
-
-    rect rgb(50, 0, 0)
-    Note right of KI: Direkte KI-Interaktion
-    Azubi->>KM: Fachliche Frage zum Projekt
-    KM->>KI: Kontextbezogene Anfrage
-    KI-->>KM: Lösungsvorschlag / Code-Review
-    KM-->>Azubi: Antwort (für Ausbilder einsehbar)
-    end
-```
-
 ## Azubi <--> KI / Projekt
 
 ```mermaid
@@ -78,48 +39,4 @@ graph TD
     %% Fokus-Notiz für den Ausbilder
     N1><b>Fokus des Vorgehens:</b><br/>- Volle Kontrolle durch kleine Iterationen<br/>- Tiefes Verständnis der Veränderungen<br/>- KI agiert als ausführendes Werkzeug & Tutor]:::fokus
     A -.-> N1
-```
-
-------
-
-**Geplanter Workflow**: Azubi <--> Ausbilder
-
-```mermaid
-%% Datum: 2026-04-02
-%% Version: 2.0
-%% Dateiname: azubi_fiae_workflow_optimiert.mermaid
-%% Chat-ID: N/A
-
-sequenceDiagram
-    participant Azubi
-    participant Git as Git-Repository
-    participant KM as Kommunikationsmodul
-    participant KI as KI-Schnittstelle
-    participant Ausbilder
-
-    Note over Azubi, Ausbilder: Optimierter DevOps & Kommunikations-Workflow
-
-    rect rgb(50, 50, 0)
-    Note right of Azubi: 1. Automatisierter Status
-    Azubi->>Git: Code Push (Feature: Mitglieder-Logik)
-    Git->>KM: Webhook: Neuer Commit / Pull Request
-    KM->>KI: Bitte Code-Änderungen & Ticket-Status analysieren
-    KI-->>KM: Extrahiert Fortschritt & generiert technisches Summary
-    end
-
-    rect rgb(0, 50, 0)
-    Note right of Ausbilder: 2. Transparente Steuerung
-    Ausbilder->>KM: Abruf Dashboard
-    KM-->>Ausbilder: KI-generierter Report (Tickets, Code-Qualität)
-    Ausbilder->>KM: Gibt Feature frei oder fordert Refactoring
-    KM-->>Azubi: Benachrichtigung & Ticket-Update
-    end
-
-    rect rgb(50, 0, 0)
-    Note right of KI: 3. Proaktives Mentoring
-    Azubi->>KM: Hängt bei komplexem Datenbank-Query
-    KM->>KI: Übergibt DB-Schema & Fehlermeldung
-    KI-->>KM: Zeigt optimierten Query & erklärt das "Warum"
-    KM-->>Azubi: Lern-Notiz wird in Projektdokumentation gespeichert
-    end
 ```
