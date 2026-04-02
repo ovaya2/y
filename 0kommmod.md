@@ -79,3 +79,47 @@ graph TD
     N1><b>Fokus des Vorgehens:</b><br/>- Volle Kontrolle durch kleine Iterationen<br/>- Tiefes Verständnis der Veränderungen<br/>- KI agiert als ausführendes Werkzeug & Tutor]:::fokus
     A -.-> N1
 ```
+
+------
+
+**Geplanter Workflow**: Azubi <--> Ausbilder
+
+```mermaid
+%% Datum: 2026-04-02
+%% Version: 2.0
+%% Dateiname: azubi_fiae_workflow_optimiert.mermaid
+%% Chat-ID: N/A
+
+sequenceDiagram
+    participant Azubi
+    participant Git as Git-Repository
+    participant KM as Kommunikationsmodul
+    participant KI as KI-Schnittstelle
+    participant Ausbilder
+
+    Note over Azubi, Ausbilder: Optimierter DevOps & Kommunikations-Workflow
+
+    rect rgb(50, 50, 0)
+    Note right of Azubi: 1. Automatisierter Status
+    Azubi->>Git: Code Push (Feature: Mitglieder-Logik)
+    Git->>KM: Webhook: Neuer Commit / Pull Request
+    KM->>KI: Bitte Code-Änderungen & Ticket-Status analysieren
+    KI-->>KM: Extrahiert Fortschritt & generiert technisches Summary
+    end
+
+    rect rgb(0, 50, 0)
+    Note right of Ausbilder: 2. Transparente Steuerung
+    Ausbilder->>KM: Abruf Dashboard
+    KM-->>Ausbilder: KI-generierter Report (Tickets, Code-Qualität)
+    Ausbilder->>KM: Gibt Feature frei oder fordert Refactoring
+    KM-->>Azubi: Benachrichtigung & Ticket-Update
+    end
+
+    rect rgb(50, 0, 0)
+    Note right of KI: 3. Proaktives Mentoring
+    Azubi->>KM: Hängt bei komplexem Datenbank-Query
+    KM->>KI: Übergibt DB-Schema & Fehlermeldung
+    KI-->>KM: Zeigt optimierten Query & erklärt das "Warum"
+    KM-->>Azubi: Lern-Notiz wird in Projektdokumentation gespeichert
+    end
+```
