@@ -1,6 +1,6 @@
 # yam2 — Adress-Infrastruktur
 
-**Stand:** 21.04.2026
+**Stand:** 04.05.2026
 **Autor:** Ovaya
 
 Design der Adress-Infrastruktur für yam2 aus dem Teams-Gespräch vom 20.04.2026.
@@ -29,12 +29,12 @@ Abschnitte einklappbar; Inhaltsverzeichnis für gezielte Navigation.
 
 Vorgaben aus dem Gespräch vom 20.04.2026:
 
-- `d_ygrp` soll die Möglichkeit haben, ein Vereinsheim zu definieren
-- Der Verein braucht einen Sitz
-- Sportstätten sind Orte, an denen bestimmte Tätigkeiten stattfinden (Beispiel: Handball, Turnen in Sporthalle Beispielstraße 3)
-- Anwendungsfälle und Logik zusammenschreiben — insbesondere Historisierung und mehrere Mitglieder an gleicher Adresse
-- Erst Design, dann Implementierung
-- Reihenfolge: Kundenanforderung → Functional Specs → Technical Specs → DB-Design → Implementierung
+* `d_ygrp` soll die Möglichkeit haben, ein Vereinsheim zu definieren
+* Der Verein braucht einen Sitz
+* Sportstätten sind Orte, an denen bestimmte Tätigkeiten stattfinden (Beispiel: Handball, Turnen in Sporthalle Beispielstraße 3)
+* Anwendungsfälle und Logik zusammenschreiben — insbesondere Historisierung und mehrere Mitglieder an gleicher Adresse
+* Erst Design, dann Implementierung
+* Reihenfolge: Kundenanforderung → Functional Specs → Technical Specs → DB-Design → Implementierung
 
 Abbildung im Dokument: Abschnitt 2 = Functional Specs, Abschnitt 3 = Technical Specs, Abschnitt 4 = DB-Design.
 
@@ -122,10 +122,10 @@ d_land ◄── d_ort ◄── m_adresse ◄─┬── x_gl_adresse ──�
 
 ### 4.3 Zentrale Konstrukte
 
-- Filter-Unique-Index `uq_x_gl_adresse_aktiv WHERE gueltig_bis IS NULL` — max. eine aktive Adresse pro Mitglied
-- Immutable-Trigger `tr_m_adresse_immutable` — UPDATE nur via SP mit CONTEXT_INFO
-- CHECK-Constraint `ck_m_adresse_mindestangabe` — Hausnummer oder Adresszusatz gesetzt
-- Dedupe-Index `uq_m_adresse_physisch` — identische Adressen nur einmal
+* Filter-Unique-Index `uq_x_gl_adresse_aktiv WHERE gueltig_bis IS NULL` — max. eine aktive Adresse pro Mitglied
+* Immutable-Trigger `tr_m_adresse_immutable` — UPDATE nur via SP mit CONTEXT\_INFO
+* CHECK-Constraint `ck_m_adresse_mindestangabe` — Hausnummer oder Adresszusatz gesetzt
+* Dedupe-Index `uq_m_adresse_physisch` — identische Adressen nur einmal
 
 ### 4.4 Vollständige DDL
 
@@ -271,9 +271,10 @@ GO
 <summary>5 Phasen vom Ist-Zustand zum Ziel</summary>
 
 **Live-DB-Status (Stand 2026-04-21, 10 Mitglieder):**
-- `m_gl.str`, `m_gl.plz`, `m_gl.ort` sind alle nullable — nicht jedes Mitglied hat Adressdaten
-- Neue Tabellen (`m_adresse`, `x_gl_adresse`, `d_ort`, `d_land`, `m_sportstaette`, `m_vereinsheim`) noch nicht deployed
-- `d_ygrp` hat noch kein `vereinssitz_adresse_id`
+
+* `m_gl.str`, `m_gl.plz`, `m_gl.ort` sind alle nullable — nicht jedes Mitglied hat Adressdaten
+* Neue Tabellen (`m_adresse`, `x_gl_adresse`, `d_ort`, `d_land`, `m_sportstaette`, `m_vereinsheim`) noch nicht deployed
+* `d_ygrp` hat noch kein `vereinssitz_adresse_id`
 
 | Phase | Aktion | Breaking? |
 |---|---|---|
@@ -294,50 +295,115 @@ Phase 5 (Breaking Change) setzt ein eingeführtes DB-Projekt voraus (siehe Absch
 ## 6. Voraussetzung: DB-Projekt
 
 <details>
-<summary>SSDT-Einführung, Struktur, Workflow</summary>
+<summary>SSDT-Einführung — Status, Befunde, offene Schritte</summary>
 
 **Teams-Anmerkung:** DB-Projekt fehlt, Schema-Drift bereits sichtbar.
 **Ansatz:** Die Adress-Infrastruktur bringt sechs neue Tabellen und eine Änderung an `d_ygrp` — ohne versioniertes Schema vergrößert sich die Drift. Ein SQL Server Database Project (SSDT) wird daher vor oder parallel zur Umsetzung eingeführt.
 
-### 6.1 Struktur
+### 6.1 Aktueller Status (Stand 04.05.2026)
+
+| # | Schritt | Status |
+|---|---|---|
+| 1 | SSDT-Projekt `yam2.Database` in Solution anlegen | ✅ erledigt |
+| 2 | Schema-Import aus `[DB-SERVER]2.[DB-NAME]` via SQL-Skript | ✅ erledigt — 92 Anweisungen importiert |
+| 3 | Build — DACPAC erzeugen, Validierungsfehler beheben | ⏳ ausstehend — Build noch nicht durchgeführt |
+| 4 | Post-Deployment-Skript für Seed-Daten (`d_perm`, `d_role`, `d_anr`, `d_sta`, …) | ⏳ ausstehend |
+| 5 | Schema-Compare gegen Live-DB, Drift dokumentieren | ⏳ ausstehend |
+| 6 | Git-Commit — ab hier alle Schema-Änderungen nur über Projekt | ⏳ ausstehend |
+
+### 6.2 Befunde aus dem Import
+
+**DSP-Mismatch — wichtig:**
+
+```
+Projekt-Zielplattform:  Sql130  (SQL Server 2016)
+Live-DB:                Sql160  (SQL Server 2022)
+```
+
+Der Import-Wizard hat Sql130 gewählt, weil DACPAC-Import via VS 2017 mit `Sql160DatabaseSchemaProvider` fehlschlug (fehlender Provider). Das Projekt läuft mit Sql130, was für yam2 akzeptabel ist — SQL Server 2022 ist abwärtskompatibel. Einzige Einschränkung: SQL-2022-spezifische Syntax (z.B. `IS [NOT] DISTINCT FROM`) wird im Build als Fehler markiert. Aktuell betrifft das keinen Code.
+
+**Bekannte Schema-Drift im `dbo`-Schema:**
+
+Die DB enthält Tabellen aus früheren Lernprojekten, die nicht zu yam2 gehören:
+
+```
+dbo.__EFMigrationsHistory    ← EF Core Migrations-Artefakt
+dbo.Adressen                 ← EF-Lernprojekt (englische Spaltennamen, uniqueidentifier PK)
+dbo.Members                  ← EF-Lernprojekt
+dbo.Roles                    ← EF-Lernprojekt
+dbo.Users                    ← EF-Lernprojekt
+dbo.Animal / Zoo / ZooAnimal2 ← Übungs-Tabellen
+dbo.Currency_Master          ← Übungs-Tabelle
+dbo.tt1 / tt2 / tt_artiel    ← Übungs-Tabellen
+yam2.Members                 ← Vorläufer-Schema, historisch
+```
+
+Diese sind im SSDT-Projekt enthalten, gehören aber nicht zu yam2. Empfehlung: im Projekt belassen (kein aktives Löschen), aber beim Schema-Compare ignorieren (`dbo`-Schema aus Compare ausschließen).
+
+**Importierter yam3-Stand:**
+
+Alle produktiven Tabellen erfolgreich importiert:
+
+```
+yam3: d_anr, d_perm, d_role, d_sta, d_ybart, d_yfun, d_ygrp, d_ykto,
+      d_ysolltyp, d_zart, f_ist (inkl. Trigger tr_f_ist_auto_close),
+      f_soll, m_gl, m_jump, m_mark, m_u, t_reg, x_fa, x_gm, x_rp, x_ur
+      Views:  v_user_perms
+      SPs:    sp_multiplier_soll
+```
+
+**Neue Adress-Tabellen noch nicht im Projekt** (folgen in Migrations-Phase 1):
+```
+yam3: d_land, d_ort, m_adresse, x_gl_adresse, m_sportstaette, m_vereinsheim
+      d_ygrp.vereinssitz_adresse_id  ← ALTER TABLE noch nicht deployed
+```
+
+### 6.3 Projekt-Struktur (aktuell)
 
 ```
 yam2.sln
-├── yam2/                         # WPF-App (bestehend)
-└── yam2.Database/                # NEU: SSDT-Projekt
+├── yam2/                              # WPF-App (bestehend)
+└── yam2.Database/                     # SSDT-Projekt ✅
     ├── yam3/
-    │   ├── Tables/               # m_gl.sql, m_adresse.sql, x_gl_adresse.sql, …
-    │   ├── Views/
-    │   ├── StoredProcedures/
-    │   ├── Triggers/             # tr_f_ist_auto_close.sql, tr_m_adresse_immutable.sql
-    │   └── Security/
+    │   ├── Tables/                    # 20 Tabellen ✅
+    │   ├── Views/                     # v_user_perms ✅
+    │   ├── Stored Procedures/         # sp_multiplier_soll ✅
+    │   └── (Trigger in f_ist.sql)     # tr_f_ist_auto_close ✅
+    ├── dbo/Tables/                    # Lernprojekt-Rauschen (nicht löschen)
+    ├── yam2/Tables/                   # Altlast-Schema (nicht löschen)
+    ├── Security/                      # yam2.sql, yam3.sql (Schema-Definitionen)
     ├── Scripts/
-    │   ├── PreDeployment.sql
-    │   └── PostDeployment.sql    # Seed-Daten (Lookups, RBAC)
-    └── yam2.Database.sqlproj
+    │   └── ScriptsIgnoredOnImport.sql # DB-Level-Settings, ignoriert
+    └── yam2.Database.sqlproj          # DSP: Sql130
 ```
 
-### 6.2 Einführungs-Schritte
+### 6.4 Nächste Schritte im DB-Projekt
 
-| # | Schritt |
-|---|---|
-| 1 | SSDT-Projekt in Solution anlegen |
-| 2 | Schema-Import aus `[DB-SERVER]2.[DB-NAME].yam3` (Schema Compare / Import Wizard) |
-| 3 | Build — DACPAC erzeugen, Validierungsfehler beheben |
-| 4 | Post-Deployment-Skript für Seed-Daten (`d_perm`, `d_role`, `d_anr`, `d_sta`, …) |
-| 5 | Schema-Compare gegen Live-DB, Drift dokumentieren und synchronisieren |
-| 6 | Git-Commit — ab hier alle Schema-Änderungen nur über Projekt |
+```
+1. Build ausführen → Fehler dokumentieren und beheben
+2. Adress-DDL (Phase 1) als neue .sql-Dateien anlegen:
+     yam3/Tables/d_land.sql
+     yam3/Tables/d_ort.sql
+     yam3/Tables/m_adresse.sql
+     yam3/Tables/x_gl_adresse.sql
+     yam3/Tables/m_sportstaette.sql
+     yam3/Tables/m_vereinsheim.sql
+3. d_ygrp.sql um vereinssitz_adresse_id ergänzen
+4. Git-Commit: "feat(db): SSDT-Projekt + Adress-Schema Phase 1"
+5. Schema-Compare gegen Live-DB (dbo-Schema ignorieren)
+```
 
-### 6.3 Workflow ab Einführung
+### 6.5 Workflow ab jetzt
 
 Neue Tabelle oder Schema-Änderung:
+
 1. SQL-Datei im DB-Projekt anlegen oder ändern
 2. Build — DACPAC wird erzeugt
 3. Git-Commit
 4. Deployment via Schema Compare oder `sqlpackage.exe /Publish`
 5. Rollback über vorherigen DACPAC-Stand
 
-Breaking Changes (Umbenennung, DROP COLUMN) werden über Pre- und Post-Deployment-Skripte mit Datenmigration abgesichert.
+Breaking Changes (Umbenennung, `DROP COLUMN`) werden über Pre- und Post-Deployment-Skripte mit Datenmigration abgesichert.
 
 </details>
 
@@ -354,7 +420,7 @@ Breaking Changes (Umbenennung, DROP COLUMN) werden über Pre- und Post-Deploymen
 | 2 | Bestehende `m_gl`-Kürzel (`vn`, `nn`, `tel`, `mail`, `geb`) jetzt ausschreiben oder später | Später, gemeinsam mit Punkt 1 |
 | 3 | `d_ort` vorbefüllen (~8000 DE-PLZ) oder on-demand beim Speichern anlegen | On-demand, wächst organisch |
 | 4 | PLZ-Validierung per `d_land.plz_regex` in UI-Schicht aktivieren | Ja, verhindert Müll-Daten |
-| 5 | DB-Projekt vor der Adress-Implementierung aufsetzen | Ja |
+| 5 | DB-Projekt vor der Adress-Implementierung aufsetzen | ✅ erledigt (04.05.2026) |
 | 6 | DSGVO-Anonymisierung: Felder auf NULL oder Platzhalter ("anonymisiert") | Platzhalter, bessere Diagnose in Listen |
 | 7 | Vereinsheim als eigene Tabelle `m_vereinsheim` (statt zwei Spalten in `d_ygrp`) | Ja, zukunftsfähig |
 
@@ -369,12 +435,12 @@ Breaking Changes (Umbenennung, DROP COLUMN) werden über Pre- und Post-Deploymen
 
 Nicht Teil dieses Designs — ggf. auf separate Anforderung:
 
-- Sportstätten-Buchungen / Raumbelegung
-- Vollständige DSGVO-Compliance (Zweckbindung pro Adresse, Einwilligungsmanagement, Verarbeitungs-Einschränkung nach Art. 18)
-- Adress-Zugriffs-Audit (DSGVO Art. 30)
-- Polymorphe Adress-Zuordnung (für Lieferanten, Behörden, externe Partner)
-- Mehrere parallele Adressen pro Mitglied (Rechnungs-, Post-, Lieferadresse)
-- Vereinssitz-Historisierung
+* Sportstätten-Buchungen / Raumbelegung
+* Vollständige DSGVO-Compliance (Zweckbindung pro Adresse, Einwilligungsmanagement, Verarbeitungs-Einschränkung nach Art. 18)
+* Adress-Zugriffs-Audit (DSGVO Art. 30)
+* Polymorphe Adress-Zuordnung (für Lieferanten, Behörden, externe Partner)
+* Mehrere parallele Adressen pro Mitglied (Rechnungs-, Post-, Lieferadresse)
+* Vereinssitz-Historisierung
 
 Struktur ist so gewählt, dass jedes dieser Themen ohne Breaking Change ergänzt werden kann.
 
