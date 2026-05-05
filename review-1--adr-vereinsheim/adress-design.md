@@ -1,6 +1,6 @@
 # yam2 — Adress-Infrastruktur
 
-**Stand:** 04.05.2026
+**Stand:** 05.05.2026
 **Autor:** Ovaya
 
 Design der Adress-Infrastruktur für yam2 aus dem Teams-Gespräch vom 20.04.2026.
@@ -300,7 +300,7 @@ Phase 5 (Breaking Change) setzt ein eingeführtes DB-Projekt voraus (siehe Absch
 **Teams-Anmerkung:** DB-Projekt fehlt, Schema-Drift bereits sichtbar.
 **Ansatz:** Die Adress-Infrastruktur bringt sechs neue Tabellen und eine Änderung an `d_ygrp` — ohne versioniertes Schema vergrößert sich die Drift. Ein SQL Server Database Project (SSDT) wird daher vor oder parallel zur Umsetzung eingeführt.
 
-### 6.1 Aktueller Status (Stand 04.05.2026)
+### 6.1 Aktueller Status (Stand 05.05.2026)
 
 | # | Schritt | Status |
 |---|---|---|
@@ -310,6 +310,8 @@ Phase 5 (Breaking Change) setzt ein eingeführtes DB-Projekt voraus (siehe Absch
 | 4 | Post-Deployment-Skript für Seed-Daten (`d_perm`, `d_role`, `d_anr`, `d_sta`, …) | ⏳ ausstehend |
 | 5 | Schema-Compare gegen Live-DB, Drift dokumentieren | ⏳ ausstehend |
 | 6 | Git-Commit — ab hier alle Schema-Änderungen nur über Projekt | ⏳ ausstehend |
+
+**Adress-DDL-Dateien vorbereitet (05.05.2026):** SQL-Dateien in SSDT-Format liegen unter `review-1--adr-vereinsheim/ssdt/`. Kopieren in das lokale SSDT-Projekt, dann Build ausführen.
 
 ### 6.2 Befunde aus dem Import
 
@@ -358,14 +360,24 @@ yam3: d_land, d_ort, m_adresse, x_gl_adresse, m_sportstaette, m_vereinsheim
       d_ygrp.vereinssitz_adresse_id  ← ALTER TABLE noch nicht deployed
 ```
 
-### 6.3 Projekt-Struktur (aktuell)
+### 6.3 Projekt-Struktur (Zielstand nach Adress-Phase-1)
 
 ```
 yam2.sln
 ├── yam2/                              # WPF-App (bestehend)
 └── yam2.Database/                     # SSDT-Projekt ✅
     ├── yam3/
-    │   ├── Tables/                    # 20 Tabellen ✅
+    │   ├── Tables/                    # 20 bestehende + 6 neue Adress-Tabellen
+    │   │   ├── …bestehende…           # ✅ importiert
+    │   │   ├── d_land.sql             # ⏳ aus ssdt/ kopieren
+    │   │   ├── d_ort.sql              # ⏳
+    │   │   ├── m_adresse.sql          # ⏳
+    │   │   ├── x_gl_adresse.sql       # ⏳
+    │   │   ├── m_sportstaette.sql     # ⏳
+    │   │   ├── m_vereinsheim.sql      # ⏳
+    │   │   └── d_ygrp.sql             # ⏳ ersetzen (vereinssitz_adresse_id)
+    │   ├── Triggers/
+    │   │   └── tr_m_adresse_immutable.sql  # ⏳ aus ssdt/ kopieren
     │   ├── Views/                     # v_user_perms ✅
     │   ├── Stored Procedures/         # sp_multiplier_soll ✅
     │   └── (Trigger in f_ist.sql)     # tr_f_ist_auto_close ✅
@@ -373,7 +385,9 @@ yam2.sln
     ├── yam2/Tables/                   # Altlast-Schema (nicht löschen)
     ├── Security/                      # yam2.sql, yam3.sql (Schema-Definitionen)
     ├── Scripts/
-    │   └── ScriptsIgnoredOnImport.sql # DB-Level-Settings, ignoriert
+    │   ├── ScriptsIgnoredOnImport.sql # DB-Level-Settings, ignoriert
+    │   └── PostDeployment/
+    │       └── d_land_seed.sql        # ⏳ aus ssdt/ kopieren
     └── yam2.Database.sqlproj          # DSP: Sql130
 ```
 
@@ -381,17 +395,15 @@ yam2.sln
 
 ```
 1. Build ausführen → Fehler dokumentieren und beheben
-2. Adress-DDL (Phase 1) als neue .sql-Dateien anlegen:
-     yam3/Tables/d_land.sql
-     yam3/Tables/d_ort.sql
-     yam3/Tables/m_adresse.sql
-     yam3/Tables/x_gl_adresse.sql
-     yam3/Tables/m_sportstaette.sql
-     yam3/Tables/m_vereinsheim.sql
-3. d_ygrp.sql um vereinssitz_adresse_id ergänzen
+2. ✅ Adress-DDL (Phase 1) vorbereitet — ssdt/yam3/Tables/ + ssdt/yam3/Triggers/
+     → Dateien in lokales SSDT-Projekt kopieren und ins .sqlproj einbinden
+3. ✅ d_ygrp.sql mit vereinssitz_adresse_id bereit — ssdt/yam3/Tables/d_ygrp.sql
+     → bestehende d_ygrp.sql im Projekt ersetzen
 4. Git-Commit: "feat(db): SSDT-Projekt + Adress-Schema Phase 1"
 5. Schema-Compare gegen Live-DB (dbo-Schema ignorieren)
 ```
+
+**Hinweis Trigger-Bugfix:** `tr_m_adresse_immutable.sql` enthält eine Korrektur gegenüber dem ursprünglichen DDL-Entwurf. `CONTEXT_INFO()` gibt `NULL` zurück wenn kein Kontext gesetzt ist; `NULL <> 'adresse_korrektur'` ist `NULL` (kein Fehler) — der Trigger wäre bypassbar gewesen. Fix: `DECLARE @ctx ... IF @ctx IS NULL OR @ctx <> ...`.
 
 ### 6.5 Workflow ab jetzt
 
@@ -414,15 +426,15 @@ Breaking Changes (Umbenennung, `DROP COLUMN`) werden über Pre- und Post-Deploym
 <details>
 <summary>7 Punkte zur Freigabe</summary>
 
-| # | Frage | Vorschlag |
-|---|---|---|
-| 1 | `m_gl` langfristig → `m_mitglied` umbenennen, mit allen FK-Spalten `gl_id → mitglied_id` | Ja, in separater Migration nach Adress-Abschluss |
-| 2 | Bestehende `m_gl`-Kürzel (`vn`, `nn`, `tel`, `mail`, `geb`) jetzt ausschreiben oder später | Später, gemeinsam mit Punkt 1 |
-| 3 | `d_ort` vorbefüllen (~8000 DE-PLZ) oder on-demand beim Speichern anlegen | On-demand, wächst organisch |
-| 4 | PLZ-Validierung per `d_land.plz_regex` in UI-Schicht aktivieren | Ja, verhindert Müll-Daten |
-| 5 | DB-Projekt vor der Adress-Implementierung aufsetzen | ✅ erledigt (04.05.2026) |
-| 6 | DSGVO-Anonymisierung: Felder auf NULL oder Platzhalter ("anonymisiert") | Platzhalter, bessere Diagnose in Listen |
-| 7 | Vereinsheim als eigene Tabelle `m_vereinsheim` (statt zwei Spalten in `d_ygrp`) | Ja, zukunftsfähig |
+| # | Frage | Vorschlag | Freigabe |
+|---|---|---|---|
+| 1 | `m_gl` langfristig → `m_mitglied` umbenennen, mit allen FK-Spalten `gl_id → mitglied_id` | Ja, in separater Migration nach Adress-Abschluss | ⏳ offen |
+| 2 | Bestehende `m_gl`-Kürzel (`vn`, `nn`, `tel`, `mail`, `geb`) jetzt ausschreiben oder später | Später, gemeinsam mit Punkt 1 | ⏳ offen |
+| 3 | `d_ort` vorbefüllen (~8000 DE-PLZ) oder on-demand beim Speichern anlegen | On-demand, wächst organisch | ⏳ offen |
+| 4 | PLZ-Validierung per `d_land.plz_regex` in UI-Schicht aktivieren | Ja, verhindert Müll-Daten | ⏳ offen |
+| 5 | DB-Projekt vor der Adress-Implementierung aufsetzen | ✅ erledigt (04.05.2026) | ✅ erledigt |
+| 6 | DSGVO-Anonymisierung: Felder auf NULL oder Platzhalter ("anonymisiert") | Platzhalter, bessere Diagnose in Listen | ⏳ offen |
+| 7 | Vereinsheim als eigene Tabelle `m_vereinsheim` (statt zwei Spalten in `d_ygrp`) | Ja, zukunftsfähig | ⏳ offen |
 
 </details>
 
