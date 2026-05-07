@@ -1,4 +1,4 @@
-# Übersicht: v3 → Gino-Feedback → v4
+# v3 → Gino-Feedback → v4
 
 ## A. Auf einen Blick
 
