@@ -1,61 +1,92 @@
+<!-- schema-diagramme.md — v2.0.0 — Neuaufbau aus dem Datenbankprojekt: 28 Tabellen, neue Gruppe Adressen/Vereinsobjekte, Löschverhalten berechnet -->
+<!-- erzeugt mit tools/schema_extract.py 1.0.0 und tools/schema_render.py 1.0.0; Diagramme sind Mermaid -->
+
 # yam3 — Datenbankschema-Diagramme
 
-Schema: `[yam3]` | DB: `[DB-NAME]` | Stand: 2026-04-01
+Schema: `[yam3]` | Quelle: Datenbankprojekt `yam2.Database`, Branch `feature/gruppe-sitzspalte-entfernen`, Stand `d1dfd1b` | Stand: 2026-10-07
+
+Die Beschreibung der Tabellen und Spalten steht in `schema.md`. Dort steht auch die Zuordnung alter zu neuen Namen.
 
 ---
 
-## 1. Gesamtübersicht (Tabellengruppen)
+## 1. Gesamtübersicht (Tabellengruppen, Pfeil = „wird referenziert von“)
 
 ```mermaid
 graph TD
-    subgraph MASTER["Mastertabellen (m_)"]
-        m_gl["m_gl\nMitglieder"]
-        m_u["m_u\nBenutzer"]
-        m_jump["m_jump\nBesuchsverlauf"]
-        m_mark["m_mark\nMarkierungen"]
+    subgraph MASTER["Stammdaten"]
+        m_mitglied["m_mitglied<br/>Mitglieder"]
+        m_user["m_user<br/>Benutzer"]
+        m_jump["m_jump<br/>Besuchsverlauf"]
+        m_mark["m_mark<br/>Markierungen"]
     end
-
-    subgraph FAKT["Faktentabellen (f_)"]
-        f_soll["f_soll\nGebühren / Soll"]
-        f_ist["f_ist\nZahlungen / Ist"]
+    subgraph FAKT["Finanzen"]
+        f_soll["f_soll<br/>Gebühren (Soll)"]
+        f_ist["f_ist<br/>Zahlungen (Ist)"]
     end
-
-    subgraph LOOKUP["Lookup-Tabellen (d_)"]
-        d_anr["d_anr\nAnreden"]
-        d_sta["d_sta\nMitgliedsstatus"]
-        d_ybart["d_ybart\nBeitragsarten"]
-        d_ysolltyp["d_ysolltyp\nSoll-Typen"]
-        d_ykto["d_ykto\nVereinskonten"]
-        d_zart["d_zart\nZahlungsarten"]
+    subgraph LOOKUP["Lookups"]
+        d_anrede["d_anrede<br/>Anreden"]
+        d_status["d_status<br/>Mitgliedsstatus"]
+        d_beitragsart["d_beitragsart<br/>Beitragsarten"]
+        d_solltyp["d_solltyp<br/>Soll-Typen"]
+        d_konto["d_konto<br/>Vereinskonten"]
+        d_zahlungsart["d_zahlungsart<br/>Zahlungsarten"]
     end
-
-    subgraph RBAC["RBAC (d_ / x_)"]
-        d_role["d_role\nRollen"]
-        d_perm["d_perm\nPermissions"]
-        x_ur["x_ur\nUser ↔ Rolle"]
-        x_rp["x_rp\nRolle ↔ Permission"]
+    subgraph RBAC["Rechte (RBAC)"]
+        d_role["d_role<br/>Rollen"]
+        d_perm["d_perm<br/>Berechtigungen"]
+        x_user_role["x_user_role<br/>Benutzer ↔ Rolle"]
+        x_role_perm["x_role_perm<br/>Rolle ↔ Berechtigung"]
     end
-
-    subgraph ZUORD["Zuordnungen (x_)"]
-        x_gm["x_gm\nMitglied ↔ Gruppe"]
-        x_fa["x_fa\nMitglied ↔ Funktion"]
-        d_ygrp["d_ygrp\nGruppen"]
-        d_yfun["d_yfun\nFunktionen"]
+    subgraph ZUORD["Gruppen und Funktionen"]
+        d_gruppe["d_gruppe<br/>Gruppen / Abteilungen"]
+        d_yfun["d_yfun<br/>Funktionen / Ämter"]
+        x_gruppe_mitglied["x_gruppe_mitglied<br/>Mitglied ↔ Gruppe"]
+        x_fa["x_fa<br/>Mitglied ↔ Funktion"]
     end
-
-    subgraph TECH["Technisch (t_)"]
-        t_reg["t_reg\nApp-Registry"]
+    subgraph ADR["Adressen"]
+        d_land["d_land<br/>Länder"]
+        d_ort["d_ort<br/>Orte / PLZ"]
+        m_adresse["m_adresse<br/>Adressen"]
+        x_mitglied_adresse["x_mitglied_adresse<br/>Mitglied ↔ Adresse"]
     end
-
-    m_gl --> f_soll
-    m_gl --> m_u
+    subgraph OBJ["Vereinsobjekte"]
+        d_objekttyp["d_objekttyp<br/>Objekttypen"]
+        m_objekt["m_objekt<br/>Vereinsobjekte"]
+        x_objekt_gruppe["x_objekt_gruppe<br/>Objekt ↔ Gruppe"]
+    end
+    subgraph TECH["Technisch"]
+        t_reg["t_reg<br/>App-Registry"]
+    end
+    d_anrede --> m_mitglied
+    d_beitragsart --> f_soll
+    d_beitragsart --> m_mitglied
+    d_gruppe --> x_gruppe_mitglied
+    d_gruppe --> x_objekt_gruppe
+    d_konto --> f_ist
+    d_land --> d_ort
+    d_objekttyp --> m_objekt
+    d_ort --> m_adresse
+    d_perm --> x_role_perm
+    d_role --> x_role_perm
+    d_role --> x_user_role
+    d_solltyp --> f_soll
+    d_status --> m_mitglied
+    d_yfun --> x_fa
+    d_zahlungsart --> f_ist
     f_soll --> f_ist
-    m_u --> x_ur
-    x_ur --> d_role
-    d_role --> x_rp
-    x_rp --> d_perm
-    m_gl --> x_gm
-    m_gl --> x_fa
+    m_adresse --> m_objekt
+    m_adresse --> x_mitglied_adresse
+    m_mitglied --> f_soll
+    m_mitglied --> m_jump
+    m_mitglied --> m_mark
+    m_mitglied --> m_user
+    m_mitglied --> x_fa
+    m_mitglied --> x_gruppe_mitglied
+    m_mitglied --> x_mitglied_adresse
+    m_objekt --> x_objekt_gruppe
+    m_user --> m_jump
+    m_user --> m_mark
+    m_user --> x_user_role
 ```
 
 ---
@@ -64,37 +95,36 @@ graph TD
 
 ```mermaid
 erDiagram
-    m_gl {
+    m_mitglied {
         int id PK
-        nvarchar gl_nr UK
-        int anr_id FK
-        nvarchar vn
-        nvarchar nn
-        date geb
-        nvarchar mail
-        nvarchar tel
+        nvarchar mitglied_nr UK
+        int anrede_id FK
+        nvarchar vorname
+        nvarchar nachname
+        date geburtsdatum
+        nvarchar email
+        nvarchar telefon
         nvarchar str
         nvarchar plz
         nvarchar ort
         nvarchar iban
         nvarchar bic
-        nvarchar sepa_ref
+        nvarchar sepa_referenz
         date sepa_datum
-        int sta_id FK
-        int ybart_id FK
+        int status_id FK
+        int beitragsart_id FK
         date eintritt
         date austritt
-        bit dsgvo_dat
-        bit dsgvo_foto
+        bit dsgvo_einwilligung_daten
+        bit dsgvo_einwilligung_foto
         datetime erstellt_am
         datetime geaendert_am
     }
-
     f_soll {
         int id PK
-        int gl_id FK
-        int ybart_id FK
-        int ysolltyp_id FK
+        int mitglied_id FK
+        int beitragsart_id FK
+        int solltyp_id FK
         int jahr
         decimal betrag
         nvarchar zweck
@@ -102,236 +132,328 @@ erDiagram
         bit erledigt
         uniqueidentifier batch_id
     }
-
     f_ist {
         int id PK
         int soll_id FK
-        int ykto_id FK
-        int zart_id FK
+        int konto_id FK
+        int zahlungsart_id FK
         decimal betrag
         date datum
         nvarchar text
         uniqueidentifier batch_id
     }
-
-    d_anr {
+    d_status {
         int id PK
-        nvarchar bez
+        nvarchar bezeichnung
     }
-
-    d_sta {
+    d_anrede {
         int id PK
-        nvarchar bez
+        nvarchar bezeichnung
     }
-
-    d_ybart {
+    d_beitragsart {
         int id PK
-        nvarchar bez
-        decimal std_betrag
+        nvarchar bezeichnung
+        decimal standard_betrag
     }
-
-    d_ysolltyp {
+    d_solltyp {
         int id PK
-        nvarchar bez
+        nvarchar bezeichnung
     }
-
-    d_ykto {
+    d_konto {
         int id PK
-        nvarchar bez
+        nvarchar bezeichnung
         nvarchar iban
     }
-
-    d_zart {
+    d_zahlungsart {
         int id PK
-        nvarchar bez
+        nvarchar bezeichnung
     }
-
-    m_gl ||--o{ f_soll : "hat (CASCADE)"
-    f_soll ||--o{ f_ist : "wird bezahlt durch"
-    d_anr ||--o{ m_gl : "anr_id"
-    d_sta ||--o{ m_gl : "sta_id"
-    d_ybart ||--o{ m_gl : "ybart_id"
-    d_ybart ||--o{ f_soll : "ybart_id"
-    d_ysolltyp ||--o{ f_soll : "ysolltyp_id"
-    d_ykto ||--o{ f_ist : "ykto_id"
-    d_zart ||--o{ f_ist : "zart_id"
+    d_anrede ||--o{ m_mitglied : "anrede_id"
+    d_status ||--o{ m_mitglied : "status_id"
+    d_beitragsart ||--o{ m_mitglied : "beitragsart_id"
+    d_beitragsart ||--o{ f_soll : "beitragsart_id"
+    d_solltyp ||--o{ f_soll : "solltyp_id"
+    m_mitglied ||--o{ f_soll : "mitglied_id"
+    d_konto ||--o{ f_ist : "konto_id"
+    d_zahlungsart ||--o{ f_ist : "zahlungsart_id"
+    f_soll |o--o{ f_ist : "soll_id"
 ```
 
 ---
 
-## 3. Benutzerverwaltung & RBAC
+## 3. Benutzerverwaltung und RBAC
 
 ```mermaid
 erDiagram
-    m_u {
+    m_user {
         int id PK
-        int gl_id FK
+        int mitglied_id FK
         nvarchar win_user UK
         bit is_admin
         datetime letzter_login
     }
-
+    x_user_role {
+        int user_id PK, FK
+        int role_id PK, FK
+        datetime zugewiesen_am
+    }
     d_role {
         int id PK
-        nvarchar bez UK
+        nvarchar bezeichnung UK
         nvarchar beschreibung
         bit is_superadmin
         bit is_system
     }
-
+    x_role_perm {
+        int role_id PK, FK
+        int perm_id PK, FK
+    }
     d_perm {
         int id PK
         nvarchar perm_key UK
         nvarchar modul
         nvarchar aktion
-        nvarchar bez
+        nvarchar bezeichnung
     }
-
-    x_ur {
-        int u_id FK
-        int role_id FK
-        datetime zugewiesen_am
-    }
-
-    x_rp {
-        int role_id FK
-        int perm_id FK
-    }
-
-    m_gl {
+    m_jump {
         int id PK
-        nvarchar gl_nr UK
-        nvarchar vn
-        nvarchar nn
+        int u_id FK
+        int mitglied_id FK
+        datetime besucht_am
     }
-
-    m_gl ||--o{ m_u : "gl_id (optional)"
-    m_u ||--o{ x_ur : "u_id (CASCADE)"
-    d_role ||--o{ x_ur : "role_id"
-    d_role ||--o{ x_rp : "role_id (CASCADE)"
-    d_perm ||--o{ x_rp : "perm_id"
+    m_mark {
+        int id PK
+        int u_id FK
+        int mitglied_id FK
+        char mark_char
+        datetime gesetz_am
+    }
+    m_mitglied {
+        int id PK
+        nvarchar mitglied_nr UK
+        int anrede_id FK
+        int status_id FK
+        int beitragsart_id FK
+    }
+    m_mitglied |o--o{ m_user : "mitglied_id"
+    d_role ||--o{ x_user_role : "role_id"
+    m_user ||--o{ x_user_role : "user_id"
+    d_perm ||--o{ x_role_perm : "perm_id"
+    d_role ||--o{ x_role_perm : "role_id"
+    m_mitglied ||--o{ m_jump : "mitglied_id"
+    m_user ||--o{ m_jump : "u_id"
+    m_mitglied ||--o{ m_mark : "mitglied_id"
+    m_user ||--o{ m_mark : "u_id"
 ```
 
 ---
 
-## 4. Gruppen, Funktionen & technische Tabellen
+## 4. Gruppen, Funktionen und technische Tabellen
 
 ```mermaid
 erDiagram
-    m_gl {
+    d_gruppe {
         int id PK
-        nvarchar gl_nr UK
-        nvarchar vn
-        nvarchar nn
+        nvarchar bezeichnung
     }
-
-    d_ygrp {
-        int id PK
-        nvarchar bez
+    x_gruppe_mitglied {
+        int mitglied_id PK, FK
+        int gruppe_id PK, FK
+        date seit
     }
-
     d_yfun {
         int id PK
         nvarchar bez
     }
-
-    x_gm {
-        int gl_id FK
-        int ygrp_id FK
-        date seit
-    }
-
     x_fa {
-        int gl_id FK
-        int yfun_id FK
+        int mitglied_id PK, FK
+        int yfun_id PK, FK
         date wahl
     }
-
-    m_u {
-        int id PK
-        nvarchar win_user UK
-    }
-
-    m_jump {
-        int id PK
-        int u_id FK
-        int gl_id FK
-        datetime besucht_am
-    }
-
-    m_mark {
-        int id PK
-        int u_id FK
-        int gl_id FK
-        char mark_char
-        datetime gesetz_am
-    }
-
     t_reg {
         char reg_name PK
         nvarchar payload
-        int u_id FK
+        int u_id
         datetime geaendert_am
     }
-
-    m_gl ||--o{ x_gm : "gl_id (CASCADE)"
-    d_ygrp ||--o{ x_gm : "ygrp_id"
-    m_gl ||--o{ x_fa : "gl_id (CASCADE)"
+    m_user {
+        int id PK
+        int mitglied_id FK
+        nvarchar win_user UK
+    }
+    m_mitglied {
+        int id PK
+        nvarchar mitglied_nr UK
+        int anrede_id FK
+        int status_id FK
+        int beitragsart_id FK
+    }
+    m_mitglied ||--o{ x_gruppe_mitglied : "mitglied_id"
+    d_gruppe ||--o{ x_gruppe_mitglied : "gruppe_id"
+    m_mitglied ||--o{ x_fa : "mitglied_id"
     d_yfun ||--o{ x_fa : "yfun_id"
-    m_u ||--o{ m_jump : "u_id"
-    m_gl ||--o{ m_jump : "gl_id (CASCADE)"
-    m_u ||--o{ m_mark : "u_id"
-    m_gl ||--o{ m_mark : "gl_id (CASCADE)"
-    m_u ||--o| t_reg : "u_id"
+    m_mitglied |o--o{ m_user : "mitglied_id"
 ```
 
 ---
 
-## 5. CASCADE-Übersicht
+## 5. Adressen und Vereinsobjekte
 
-> Welche Daten werden beim Löschen eines Eintrags automatisch mitgelöscht?
+```mermaid
+erDiagram
+    d_land {
+        int land_id PK
+        char iso_code UK
+        nvarchar bezeichnung
+        nvarchar plz_regex
+    }
+    d_ort {
+        int ort_id PK
+        int land_id FK
+        varchar plz
+        nvarchar ort
+        nvarchar bundesland
+    }
+    m_adresse {
+        int adresse_id PK
+        nvarchar strasse
+        nvarchar hausnummer
+        nvarchar adresszusatz
+        int ort_id FK
+        datetime2 erstellt_am
+        nvarchar erstellt_von
+    }
+    x_mitglied_adresse {
+        int mitglied_adresse_id PK
+        int mitglied_id FK
+        int adresse_id FK
+        date gueltig_von
+        date gueltig_bis
+        datetime2 geaendert_am
+        nvarchar geaendert_von
+    }
+    m_mitglied {
+        int id PK
+        nvarchar mitglied_nr UK
+        int anrede_id FK
+        int status_id FK
+        int beitragsart_id FK
+    }
+    d_objekttyp {
+        int objekttyp_id PK
+        nvarchar bezeichnung UK
+    }
+    m_objekt {
+        int objekt_id PK
+        nvarchar bezeichnung
+        int typ_id FK
+        int adresse_id FK
+        bit ist_sitz
+        bit ist_vereinseigen
+        nvarchar beschreibung
+        bit aktiv
+        datetime2 erstellt_am
+        nvarchar erstellt_von
+        datetime2 geaendert_am
+        nvarchar geaendert_von
+    }
+    x_objekt_gruppe {
+        int objekt_id PK, FK
+        int ygrp_id PK, FK
+        nvarchar beschreibung
+        datetime2 erstellt_am
+        nvarchar erstellt_von
+    }
+    d_gruppe {
+        int id PK
+    }
+    d_land ||--o{ d_ort : "land_id"
+    d_ort ||--o{ m_adresse : "ort_id"
+    m_mitglied ||--o{ x_mitglied_adresse : "mitglied_id"
+    m_adresse ||--o{ x_mitglied_adresse : "adresse_id"
+    d_objekttyp ||--o{ m_objekt : "typ_id"
+    m_adresse ||--o{ m_objekt : "adresse_id"
+    m_objekt ||--o{ x_objekt_gruppe : "objekt_id"
+    d_gruppe ||--o{ x_objekt_gruppe : "ygrp_id"
+```
+
+---
+
+## 6. Löschverhalten (CASCADE und blockierende Verweise)
 
 ```mermaid
 graph TD
-    m_gl["🗑 m_gl\n(Mitglied löschen)"]
-
-    m_gl -->|CASCADE| f_soll["f_soll\nGebühren"]
-    m_gl -->|CASCADE| x_gm["x_gm\nGruppen-Zuordnung"]
-    m_gl -->|CASCADE| x_fa["x_fa\nFunktions-Zuordnung"]
-    m_gl -->|CASCADE| m_jump["m_jump\nBesuchsverlauf"]
-    m_gl -->|CASCADE| m_mark["m_mark\nMarkierungen"]
-
-    f_soll -->|"⚠ NO ACTION\n(Waisen!)"| f_ist["f_ist\nZahlungen bleiben erhalten"]
-
-    style m_gl fill:#2e1a1a,stroke:#e05252,color:#e05252
-    style f_ist fill:#3a2e14,stroke:#f5a623,color:#f5a623
+    d_perm["d_perm<br/>Berechtigungen"]
+    d_role["d_role<br/>Rollen"]
+    f_ist["f_ist<br/>Zahlungen (Ist)"]
+    f_soll["f_soll<br/>Gebühren (Soll)"]
+    m_jump["m_jump<br/>Besuchsverlauf"]
+    m_mark["m_mark<br/>Markierungen"]
+    m_mitglied["m_mitglied<br/>Mitglieder"]
+    m_objekt["m_objekt<br/>Vereinsobjekte"]
+    m_user["m_user<br/>Benutzer"]
+    x_fa["x_fa<br/>Mitglied ↔ Funktion"]
+    x_gruppe_mitglied["x_gruppe_mitglied<br/>Mitglied ↔ Gruppe"]
+    x_mitglied_adresse["x_mitglied_adresse<br/>Mitglied ↔ Adresse"]
+    x_objekt_gruppe["x_objekt_gruppe<br/>Objekt ↔ Gruppe"]
+    x_role_perm["x_role_perm<br/>Rolle ↔ Berechtigung"]
+    x_user_role["x_user_role<br/>Benutzer ↔ Rolle"]
+    d_perm -->|CASCADE| x_role_perm
+    d_role -->|CASCADE| x_role_perm
+    d_role -->|CASCADE| x_user_role
+    m_mitglied -->|CASCADE| f_soll
+    m_mitglied -->|CASCADE| m_jump
+    m_mitglied -->|CASCADE| m_mark
+    m_mitglied -->|CASCADE| x_fa
+    m_mitglied -->|CASCADE| x_gruppe_mitglied
+    m_objekt -->|CASCADE| x_objekt_gruppe
+    m_user -->|CASCADE| x_user_role
+    f_soll -.->|"NO ACTION: blockiert das Löschen"| f_ist
+    m_mitglied -.->|"NO ACTION: blockiert das Löschen"| m_user
+    m_mitglied -.->|"NO ACTION: blockiert das Löschen"| x_mitglied_adresse
+    m_user -.->|"NO ACTION: blockiert das Löschen"| m_jump
+    m_user -.->|"NO ACTION: blockiert das Löschen"| m_mark
+    style d_perm fill:#2e1a1a,stroke:#e05252,color:#e05252
+    style d_role fill:#2e1a1a,stroke:#e05252,color:#e05252
+    style m_mitglied fill:#2e1a1a,stroke:#e05252,color:#e05252
+    style m_objekt fill:#2e1a1a,stroke:#e05252,color:#e05252
+    style m_user fill:#2e1a1a,stroke:#e05252,color:#e05252
 ```
 
 ---
 
-## 6. FK-Referenzmatrix
+## 7. FK-Referenzmatrix
 
 | Von | Spalte | → Nach | ON DELETE |
-|-----|--------|--------|-----------|
-| `m_gl` | `anr_id` | `d_anr.id` | NO ACTION |
-| `m_gl` | `sta_id` | `d_sta.id` | NO ACTION |
-| `m_gl` | `ybart_id` | `d_ybart.id` | NO ACTION |
-| `f_soll` | `gl_id` | `m_gl.id` | **CASCADE** |
-| `f_soll` | `ybart_id` | `d_ybart.id` | NO ACTION |
-| `f_soll` | `ysolltyp_id` | `d_ysolltyp.id` | NO ACTION |
+|---|---|---|---|
+| `d_ort` | `land_id` | `d_land.land_id` | NO ACTION |
+| `f_ist` | `konto_id` | `d_konto.id` | NO ACTION |
+| `f_ist` | `zahlungsart_id` | `d_zahlungsart.id` | NO ACTION |
 | `f_ist` | `soll_id` | `f_soll.id` | NO ACTION |
-| `f_ist` | `ykto_id` | `d_ykto.id` | NO ACTION |
-| `f_ist` | `zart_id` | `d_zart.id` | NO ACTION |
-| `m_u` | `gl_id` | `m_gl.id` | NO ACTION |
-| `x_ur` | `u_id` | `m_u.id` | **CASCADE** |
-| `x_ur` | `role_id` | `d_role.id` | NO ACTION |
-| `x_rp` | `role_id` | `d_role.id` | **CASCADE** |
-| `x_rp` | `perm_id` | `d_perm.id` | NO ACTION |
-| `m_jump` | `gl_id` | `m_gl.id` | **CASCADE** |
-| `m_jump` | `u_id` | `m_u.id` | NO ACTION |
-| `m_mark` | `gl_id` | `m_gl.id` | **CASCADE** |
-| `m_mark` | `u_id` | `m_u.id` | NO ACTION |
-| `x_gm` | `gl_id` | `m_gl.id` | **CASCADE** |
-| `x_gm` | `ygrp_id` | `d_ygrp.id` | NO ACTION |
-| `x_fa` | `gl_id` | `m_gl.id` | **CASCADE** |
+| `f_soll` | `beitragsart_id` | `d_beitragsart.id` | NO ACTION |
+| `f_soll` | `solltyp_id` | `d_solltyp.id` | NO ACTION |
+| `f_soll` | `mitglied_id` | `m_mitglied.id` | **CASCADE** |
+| `m_adresse` | `ort_id` | `d_ort.ort_id` | NO ACTION |
+| `m_jump` | `mitglied_id` | `m_mitglied.id` | **CASCADE** |
+| `m_jump` | `u_id` | `m_user.id` | NO ACTION |
+| `m_mark` | `mitglied_id` | `m_mitglied.id` | **CASCADE** |
+| `m_mark` | `u_id` | `m_user.id` | NO ACTION |
+| `m_mitglied` | `anrede_id` | `d_anrede.id` | NO ACTION |
+| `m_mitglied` | `status_id` | `d_status.id` | NO ACTION |
+| `m_mitglied` | `beitragsart_id` | `d_beitragsart.id` | NO ACTION |
+| `m_objekt` | `typ_id` | `d_objekttyp.objekttyp_id` | NO ACTION |
+| `m_objekt` | `adresse_id` | `m_adresse.adresse_id` | NO ACTION |
+| `m_user` | `mitglied_id` | `m_mitglied.id` | NO ACTION |
+| `x_fa` | `mitglied_id` | `m_mitglied.id` | **CASCADE** |
 | `x_fa` | `yfun_id` | `d_yfun.id` | NO ACTION |
+| `x_gruppe_mitglied` | `mitglied_id` | `m_mitglied.id` | **CASCADE** |
+| `x_gruppe_mitglied` | `gruppe_id` | `d_gruppe.id` | NO ACTION |
+| `x_mitglied_adresse` | `mitglied_id` | `m_mitglied.id` | NO ACTION |
+| `x_mitglied_adresse` | `adresse_id` | `m_adresse.adresse_id` | NO ACTION |
+| `x_objekt_gruppe` | `objekt_id` | `m_objekt.objekt_id` | **CASCADE** |
+| `x_objekt_gruppe` | `ygrp_id` | `d_gruppe.id` | NO ACTION |
+| `x_role_perm` | `perm_id` | `d_perm.id` | **CASCADE** |
+| `x_role_perm` | `role_id` | `d_role.id` | **CASCADE** |
+| `x_user_role` | `role_id` | `d_role.id` | **CASCADE** |
+| `x_user_role` | `user_id` | `m_user.id` | **CASCADE** |
+
