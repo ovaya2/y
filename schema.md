@@ -1,11 +1,11 @@
-<!-- schema.md — v2.0.0 — Neuaufbau aus dem Datenbankprojekt: 28 Tabellen, Namens-Zuordnung alt→neu, Adress- und Objekt-Tabellen, Code-Zugriffe, Löschverhalten -->
-<!-- erzeugt mit tools/schema_extract.py 1.0.0 und tools/schema_render.py 1.0.0; nicht von Hand ändern, sondern Quelle oder doku-config.json anpassen -->
+<!-- schema.md — v2.1.0 — Korrekturen aus der Gesamtprüfung: ON DELETE zweier RBAC-Verweise, Zugriff im Code vollständig, erledigt-Logik, Geltungsbereich, restliche Kürzel -->
+<!-- erzeugt mit tools/schema_extract.py 1.1.0 und tools/schema_render.py 1.1.0; nicht von Hand ändern, sondern Quelle oder doku-config.json anpassen -->
 
 # yam3 — Datenbankschema (Soll-Stand)
 
 Schema: `[yam3]` | Quelle: Datenbankprojekt `yam2.Database`, Branch `feature/gruppe-sitzspalte-entfernen`, Stand `d1dfd1b` | Stand: 2026-10-07
 
-> **Geltungsbereich:** Die Namen in diesem Dokument entsprechen dem Datenbankprojekt. Datenbanken, die noch nicht auf diesen Stand veröffentlicht sind, tragen die alten Namen; die Zuordnung steht in Abschnitt 3.
+> **Geltungsbereich:** Die Namen und Tabellen in diesem Dokument entsprechen dem Datenbankprojekt (Soll-Stand des genannten Branches). Datenbanken, die noch nicht auf diesen Stand veröffentlicht sind, tragen die alten Namen (Zuordnung in Abschnitt 3) und können Tabellen und Spalten eines älteren Entwurfs enthalten oder neue Tabellen noch nicht enthalten.
 
 ---
 
@@ -22,6 +22,7 @@ Schema: `[yam3]` | Quelle: Datenbankprojekt `yam2.Database`, Branch `feature/gru
 | `x_` | Zuordnungstabellen (n:m) | 6 | `x_fa`, `x_gruppe_mitglied`, `x_mitglied_adresse`, `x_objekt_gruppe`, `x_role_perm`, `x_user_role` |
 
 Lesehilfe: **PK** Primärschlüssel · **FK** Fremdschlüssel (→ Zieltabelle) · **UK** eindeutig · **IDENTITY** automatisch hochgezählt. Die Spalte „C#“ nennt die Property, die der Code per Spaltenname liest (nur wo das im Code eindeutig erkennbar ist).
+„Zugriff im Code“ nennt die Dateien unter yam2/Services (*.cs, ohne Kommentare), die den Tabellennamen als `[yam3].[name]` oder als eigenes String-Literal enthalten; „kein Treffer“ heißt: dort nicht gefunden.
 
 ---
 
@@ -33,7 +34,7 @@ Lesehilfe: **PK** Primärschlüssel · **FK** Fremdschlüssel (→ Zieltabelle) 
 
 Anreden; die IDs entsprechen dem C#-Enum `Anrede`
 
-früher `d_anr` · Datei `d_anr.sql`
+früher `d_anr` · Datei `d_anr.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -67,7 +68,7 @@ früher `d_ygrp` · Datei `d_ygrp.sql` · Zugriff im Code: `SqlGroupRepository`
 
 Vereinskonten (optional mit IBAN)
 
-früher `d_ykto` · Datei `d_ykto.sql`
+früher `d_ykto` · Datei `d_ykto.sql` · Zugriff im Code: `SqlFinanceRepository`
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -79,7 +80,7 @@ früher `d_ykto` · Datei `d_ykto.sql`
 
 Länder mit ISO-Code und PLZ-Muster
 
-Datei `d_land.sql`
+Datei `d_land.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -94,7 +95,7 @@ Datei `d_land.sql`
 
 Typ eines Vereinsobjekts (1 Vereinsheim, 2 Sportstätte, 3 Lager, 4 Sonstige); Seed in `d_objekttyp_seed.sql`
 
-Datei `d_objekttyp.sql`
+Datei `d_objekttyp.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -107,7 +108,7 @@ Datei `d_objekttyp.sql`
 
 PLZ und Ort, abhängig vom Land
 
-Datei `d_ort.sql`
+Datei `d_ort.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -138,7 +139,7 @@ Datei `d_perm.sql` · C#-Klasse `Permission` · Zugriff im Code: `SqlRoleReposit
 
 #### `[yam3].[d_role]`
 
-Rollen (RBAC); `is_superadmin` umgeht alle Prüfungen, `is_system` = nicht löschbar
+Rollen (RBAC); `is_superadmin` = jede Berechtigungsprüfung gilt als erfüllt, `is_system` = in der Oberfläche nicht bearbeit- und nicht löschbar (keine Sperre in der Datenbank)
 
 Datei `d_role.sql` · C#-Klasse `Role` · Zugriff im Code: `SqlRoleRepository`
 
@@ -156,7 +157,7 @@ Datei `d_role.sql` · C#-Klasse `Role` · Zugriff im Code: `SqlRoleRepository`
 
 Typen von Soll-Buchungen
 
-früher `d_ysolltyp` · Datei `d_ysolltyp.sql`
+früher `d_ysolltyp` · Datei `d_ysolltyp.sql` · Zugriff im Code: `SqlFinanceRepository`
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -167,7 +168,7 @@ früher `d_ysolltyp` · Datei `d_ysolltyp.sql`
 
 Mitgliedsstatus; die IDs entsprechen dem C#-Enum `MemberStatus`
 
-früher `d_sta` · Datei `d_sta.sql`
+früher `d_sta` · Datei `d_sta.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -178,7 +179,7 @@ früher `d_sta` · Datei `d_sta.sql`
 
 Funktionen und Ämter
 
-Datei `d_yfun.sql`
+Datei `d_yfun.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -189,7 +190,7 @@ Datei `d_yfun.sql`
 
 Zahlungsarten; die IDs entsprechen dem C#-Enum `Zahlungsart`
 
-früher `d_zart` · Datei `d_zart.sql`
+früher `d_zart` · Datei `d_zart.sql` · Zugriff im Code: `SqlFinanceRepository`
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -202,7 +203,7 @@ früher `d_zart` · Datei `d_zart.sql`
 
 Zahlungen (Ist)
 
-Datei `f_ist.sql` · C#-Klasse `Payment` · Zugriff im Code: `IFinanceRepository`, `SqlFinanceRepository`, `SqlHomeRepository`
+Datei `f_ist.sql` · C#-Klasse `Payment` · Zugriff im Code: `SqlFinanceRepository`, `SqlHomeRepository`
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung | C# |
 |---|---|---|---|---|---|
@@ -217,9 +218,9 @@ Datei `f_ist.sql` · C#-Klasse `Payment` · Zugriff im Code: `IFinanceRepository
 
 #### `[yam3].[f_soll]`
 
-Gebühren (Soll); `erledigt` setzt ausschließlich der Trigger `tr_f_ist_auto_close`
+Gebühren (Soll); `erledigt` wird beim Anlegen mit 0 geschrieben und danach nur vom Trigger `tr_f_ist_auto_close` neu berechnet (bei INSERT und UPDATE auf `f_ist`); eine Änderung von `betrag` hier oder das Löschen einer Zahlung berechnet es nicht neu
 
-Datei `f_soll.sql` · C#-Klasse `Fee` · Zugriff im Code: `IFinanceRepository`, `SqlFinanceRepository`, `SqlHomeRepository`
+Datei `f_soll.sql` · C#-Klasse `Fee` · Zugriff im Code: `SqlFinanceRepository`, `SqlHomeRepository`
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung | C# |
 |---|---|---|---|---|---|
@@ -240,7 +241,7 @@ Datei `f_soll.sql` · C#-Klasse `Fee` · Zugriff im Code: `IFinanceRepository`, 
 
 Adress-Stammdaten, unveränderlich; Korrekturen nur über `sp_adresse_korrigieren`
 
-Datei `m_adresse.sql`
+Datei `m_adresse.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -257,9 +258,9 @@ Datei `m_adresse.sql`
 
 #### `[yam3].[m_jump]`
 
-Besuchsverlauf (zuletzt geöffnete Mitglieder je Benutzer)
+Besuchsverlauf je Benutzer und Mitglied mit Zeitpunkt `besucht_am`
 
-Datei `m_jump.sql`
+Datei `m_jump.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -270,9 +271,9 @@ Datei `m_jump.sql`
 
 #### `[yam3].[m_mark]`
 
-Markierungen je Benutzer und Mitglied
+Markierungen (ein Zeichen `mark_char`) je Benutzer und Mitglied
 
-Datei `m_mark.sql`
+Datei `m_mark.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -320,7 +321,7 @@ früher `m_gl` · Datei `m_gl.sql` · C#-Klasse `Member` · Zugriff im Code: `Sq
 
 Vereinsobjekte (Vereinsheim, Sportstätte, Lager, Sonstige) in einer Tabelle; der Typ steht in `typ_id` → `d_objekttyp`; höchstens ein Sitz (`ist_sitz`) je Datenbank
 
-Datei `m_objekt.sql`
+Datei `m_objekt.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -361,7 +362,7 @@ früher `m_u` · Datei `m_u.sql` · C#-Klasse `AppUser` · Zugriff im Code: `Sql
 
 App-Einstellungen als Schlüssel-Wert
 
-Datei `t_reg.sql`
+Datei `t_reg.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -376,7 +377,7 @@ Datei `t_reg.sql`
 
 Zuordnung Mitglied ↔ Funktion
 
-Datei `x_fa.sql`
+Datei `x_fa.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -400,7 +401,7 @@ früher `x_gm` · Datei `x_gm.sql` · Zugriff im Code: `SqlGroupRepository`
 
 Zuordnung Mitglied ↔ Adresse mit Gültigkeitszeitraum (Adress-Historie)
 
-früher `x_gl_adresse` · Datei `x_gl_adresse.sql`
+früher `x_gl_adresse` · Datei `x_gl_adresse.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -420,7 +421,7 @@ früher `x_gl_adresse` · Datei `x_gl_adresse.sql`
 
 N:M-Verknüpfung Vereinsobjekt ↔ Gruppe/Aktivität mit Freitext-Beschreibung (z. B. „Handball jeden Dienstag 18-20 Uhr“)
 
-Datei `x_objekt_gruppe.sql`
+Datei `x_objekt_gruppe.sql` · Zugriff im Code: kein Treffer
 
 | Spalte | Typ | Null | Default | Schlüssel / Bemerkung |
 |---|---|---|---|---|
@@ -520,7 +521,7 @@ Quelle: Refactorlog des Datenbankprojekts (49 Umbenennungen). Die Namen von Cons
 
 ### Hinweise (automatisch ermittelt)
 
-- Spalten mit einem alten Kürzel im Namen: `x_fa.yfun_id`, `x_objekt_gruppe.ygrp_id`.
+- Spalten mit einem alten Kürzel im Namen: `m_jump.u_id`, `m_mark.u_id`, `t_reg.u_id`, `x_fa.yfun_id`, `x_objekt_gruppe.ygrp_id`.
 - Tabellen mit Kürzel im Namen, die im Refactorlog nicht umbenannt wurden: `d_yfun`, `x_fa`.
 
 ---
@@ -595,7 +596,7 @@ Quelle: Refactorlog des Datenbankprojekts (49 Umbenennungen). Die Namen von Cons
 
 ## 7 Indizes
 
-Außer den Primärschlüsseln und den unter Abschnitt 2 je Tabelle genannten UNIQUE-Constraints und Indizes enthält das Datenbankprojekt **keine weiteren Indizes**. Insbesondere gibt es keinen Index auf `m_mitglied.status_id` (Filter `status_id <> 6`) und keinen auf `f_soll.erledigt` (Filter `erledigt = 0`)
+Außer den Primärschlüsseln und den unter Abschnitt 2 je Tabelle genannten UNIQUE-Constraints und Indizes enthält das Datenbankprojekt **keine weiteren Indizes**. Insbesondere gibt es keinen Index auf `m_mitglied.status_id` (Filter `status_id <> 6`) und keinen auf `f_soll.erledigt` (Filter `erledigt = 0`).
 
 ---
 
@@ -607,6 +608,9 @@ Außer den Primärschlüsseln und den unter Abschnitt 2 je Tabelle genannten UNI
 - Neu je Tabelle: Zugriff im Code, C#-Klasse und C#-Property je Spalte (wo der Code die Spalte per Namen liest), Enums direkt aus dem Code.
 - Korrigiert: Der frühere Hinweis „Zahlungen bleiben als Waisen“ trifft nicht zu. `f_ist.soll_id` ist `NO ACTION`; das Löschen eines Mitglieds mit Zahlungen scheitert (Abschnitt 4). Hergeleitet aus der DDL.
 - Korrigiert: `tr_f_ist_auto_close` setzt `erledigt` auch auf 0 (nicht nur auf 1) und läuft nicht beim Löschen einer Zahlung.
+- Korrigiert: `x_role_perm.perm_id` → `d_perm` und `x_user_role.role_id` → `d_role` sind `CASCADE` (Vorgängerfassung: `NO ACTION`); so steht es seit dem ersten Stand des Datenbankprojekts in der DDL.
+- Präzisiert: `f_soll.erledigt` wird beim Anlegen mit 0 geschrieben und nur bei Zahlungsänderungen neu berechnet; eine Änderung des Soll-Betrags berechnet es nicht neu (Abschnitt 2, `f_soll`).
+- Unverändert: Die in der Vorgängerfassung als „geplant“ geführten Indizes auf `status_id` und `erledigt` gibt es weiterhin nicht (Abschnitt 7).
 - Entfallen: Abschnitt „Noch nicht im C# implementiert“; ersetzt durch „Zugriff im Code“ je Tabelle.
 - Entfallen: Angabe von Server und Datenbankname im Kopf.
 

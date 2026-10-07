@@ -1,5 +1,5 @@
-<!-- schema-diagramme.md — v2.0.0 — Neuaufbau aus dem Datenbankprojekt: 28 Tabellen, neue Gruppe Adressen/Vereinsobjekte, Löschverhalten berechnet -->
-<!-- erzeugt mit tools/schema_extract.py 1.0.0 und tools/schema_render.py 1.0.0; Diagramme sind Mermaid -->
+<!-- schema-diagramme.md — v2.0.1 -->
+<!-- erzeugt mit tools/schema_extract.py 1.1.0 und tools/schema_render.py 1.1.0; Diagramme sind Mermaid -->
 
 # yam3 — Datenbankschema-Diagramme
 
