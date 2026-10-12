@@ -305,7 +305,7 @@ Phase 5 (Breaking Change) setzt ein eingeführtes DB-Projekt voraus (siehe Absch
 | # | Schritt | Status |
 |---|---|---|
 | 1 | SSDT-Projekt `yam2.Database` in Solution anlegen | ✅ erledigt |
-| 2 | Schema-Import aus `[DB-SERVER]2.[DB-NAME]` via SQL-Skript | ✅ erledigt — 92 Anweisungen importiert |
+| 2 | Schema-Import aus `[DB-SERVER].[DB-NAME]` via SQL-Skript | ✅ erledigt — 92 Anweisungen importiert |
 | 3 | Build — DACPAC erzeugen, Validierungsfehler beheben | ⏳ ausstehend — Build noch nicht durchgeführt |
 | 4 | Post-Deployment-Skript für Seed-Daten (`d_perm`, `d_role`, `d_anr`, `d_sta`, …) | ⏳ ausstehend |
 | 5 | Schema-Compare gegen Live-DB, Drift dokumentieren | ⏳ ausstehend |

@@ -8,7 +8,7 @@
 
 ## 1. Problem
 
-Aktuell: DB-Schema (`[yam3]` auf `[DB-SERVER]2.[DB-NAME]`) existiert nur auf dem Server. Dokumentation in `docs/schema.md` muss manuell nachgezogen werden — ist bereits gedriftet.
+Aktuell: DB-Schema (`[yam3]` auf `[DB-SERVER].[DB-NAME]`) existiert nur auf dem Server. Dokumentation in `docs/schema.md` muss manuell nachgezogen werden — ist bereits gedriftet.
 
 **Risiken:**
 - Schema-Änderungen nicht nachvollziehbar (kein Git-History für DDL)
@@ -48,7 +48,7 @@ yam2.sln
 | # | Schritt | Aufwand |
 |---|---|---|
 | 1 | SSDT-Projekt in Solution anlegen | 10 min |
-| 2 | Schema-Import aus `[DB-SERVER]2.[DB-NAME].yam3` (Schema Compare oder Import Wizard) | 30 min |
+| 2 | Schema-Import aus `[DB-SERVER].[DB-NAME].yam3` (Schema Compare oder Import Wizard) | 30 min |
 | 3 | Build → sicherstellen dass DACPAC erzeugt wird, keine Validierungsfehler | 1 h (meist Reference-Fehler beheben) |
 | 4 | Post-Deployment-Skript für Seed-Daten (d_perm, d_role, d_anr, d_sta, ...) | 1–2 h |
 | 5 | Ersten Schema-Compare gegen Live-DB → Drift dokumentieren und gleichziehen | 2 h |
