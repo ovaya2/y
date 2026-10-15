@@ -3,7 +3,7 @@
 -- ═══════════════════════════════════════════════════════════════════
 -- Stand:      2026-04-20
 -- Zweck:      DDL für neue Tabellen der Adress-Infrastruktur
--- Schema:     [yam3] auf [DB-SERVER]2.[DB-NAME]
+-- Schema:     [yam3] auf [DB-SERVER].[DB-NAME]
 -- Ziel:       Deployment via SSDT / DACPAC (DB-Projekt siehe db-projekt-setup.md)
 -- ═══════════════════════════════════════════════════════════════════
 

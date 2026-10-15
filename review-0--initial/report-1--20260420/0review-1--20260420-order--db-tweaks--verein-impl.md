@@ -309,7 +309,7 @@ yam2.sln
 | # | Schritt | Aufwand |
 |---|---|---|
 | 1 | SSDT-Projekt in Solution anlegen | 10 min |
-| 2 | Schema-Import aus `[DB-SERVER]2.[DB-NAME].yam3` (Schema Compare / Import Wizard) | 30 min |
+| 2 | Schema-Import aus `[DB-SERVER].[DB-NAME].yam3` (Schema Compare / Import Wizard) | 30 min |
 | 3 | Build — DACPAC erzeugen, Validierungsfehler beheben | 1 h |
 | 4 | Post-Deployment-Skript für Seed-Daten (`d_perm`, `d_role`, `d_anr`, `d_sta`, …) | 1–2 h |
 | 5 | Schema-Compare gegen Live-DB, Drift dokumentieren und synchronisieren | 2 h |
