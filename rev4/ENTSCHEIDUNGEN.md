@@ -1,4 +1,7 @@
-<!-- ENTSCHEIDUNGEN.md — v1.3.2 -->
+<!-- ENTSCHEIDUNGEN.md — v1.5.0 -->
+<!-- v1.5.0: neu E-013 (Dokumentschichten Review/Plan), Status `entschieden`; E-012 Gino-Bezug ohne `rev4/0übersicht.md` -->
+<!-- v1.4.1: E-012 Entscheidungsdatum 12.10.2026 (Ovaya) -->
+<!-- v1.4.0: neu E-012 (Berichtsformat für Gino), Status `entschieden` -->
 <!-- v1.3.2: E-010 von Ovaya bestätigt (Rollout-Reihenfolge Sportstätten wie vorgeschlagen), Status `entschieden` -->
 <!-- v1.3.0: neu E-011 (Name des Überlappungs-Triggers für Adressen, O-5) -->
 <!-- v1.2.0: E-001, E-002, E-004 auf `getestet` (Belege SP1–SP4, W4.8), neu E-009 (Namen Objekt-Modell) und E-010 (Rollout-Reihenfolge) -->
@@ -24,6 +27,8 @@ Maskiert: `[DB-SERVER]`, `[DB-NAME]`, `[USER]`.
 | E-009 | Namen im Objekt-Modell (Abweichung von v4.1) | A | **getestet** (Probe-DB) |
 | E-010 | Rollout-Reihenfolge Sportstätten | B | entschieden |
 | E-011 | Name des Überlappungs-Triggers (Adressen) | A | **getestet** (Probe-DB) |
+| E-012 | Berichtsformat für Gino | A | entschieden |
+| E-013 | Dokumentschichten Review/Plan | A | entschieden |
 
 ## E-001 — Vereinssitz        [Klasse B · Status: getestet]
 - **Gino-Bezug:** Adress-Design §7 #7 (V4: Vorschlag stand nur in der Tabelle, nicht im DDL); Ginos Rückmeldung 06.05. (Vereinsheim/Sportstätte zusammenführen)
@@ -117,3 +122,21 @@ Maskiert: `[DB-SERVER]`, `[DB-NAME]`, `[USER]`.
 - **Umsetzung/Test:** Branch `feature/adresse-intervallschutz`, Commits `6ffbc1e` [O5.7] (Trigger, `.sqlproj`, Test v1.0.0) und `07ba7a2` [O5.13] (CHECK `>`, Test v1.1.0); Probe-DB: `tools/test-adresse-no-overlap.sql` v1.1.0, 10/10 OK. Für O-5 gibt es keine E-ID in den Commit-Nachrichten (s9 §14 Punkt 48); der Eintrag ist nachträglich.
 - **Rückweg:** Code: `git revert 6ffbc1e`; DB: `DROP TRIGGER [yam3].[tr_x_mitglied_adresse_no_overlap]` (nur Probe-DB)
 - **Review bis:** vor G5 / Rollout O-3 (Trigger auf `[DB-NAME]`) · Vertrauen: hoch (Test 10/10)
+
+## E-012 — Berichtsformat für Gino        [Klasse A · Status: entschieden]
+- **Gino-Bezug:** Berichte an Gino (Zwischenbericht, Kurznachricht; `rev4/0übersicht.md` seit E-013 Review-Schicht); Regel aus Plan §16 Punkt 3 (nur Erledigtes, keine „Als Nächstes“-Abschnitte, Klasse-C-Fragen als Fragen) und Ovayas Vorgaben (kompakt, kategorisiert, ohne Details, keine Daten, Zeiträume, Befehle).
+- **Entscheidung:** Ovaya (12.10.2026): Berichte an Gino nennen Ergebnisse und Status in Klartext ohne Daten, Zeiträume, Aufwandsangaben, Befehle, Codeformatierung, Commit-Hashes, Branch-Namen mit Datum und echte Namen. Verlauf nur als Etappen. Offenes steht als „wartet auf Entscheidung“ im Format „Optionen + Empfehlung + Ja / Alternative“, nie als „Als Nächstes“. „Abgeschlossen“ gilt nur mit angegebener offener Freigabe; was nur auf der Probe-Datenbank läuft, heißt „im Probelauf bestanden“. Jede Aussage steht in einer gemeinsamen Beleg-Tabelle mit Quelle; vor jedem Versand läuft `check_bericht.py` (mit `--deny`) und eine unabhängige Prüfung.
+- **Begründung:** Gino soll den Stand in wenigen Minuten erfassen können, ohne Details; Zahlen und Status müssen belegbar sein (Plan §0 „prüfbar“). Zeitangaben und Befehle gehören in das interne Nachschlagewerk, nicht in den Bericht.
+- **Nächste Alternative:** Bericht mit Daten, Zeiträumen und Befehlen · Wechselaufwand: Regeln R-4 und `check_bericht.py` anpassen, Texte erweitern · Auslöser: Gino wünscht Zeitangaben oder Details.
+- **Umsetzung/Test:** Doku-Paket `yam2-docs` (privat): `zwischenbericht-gino.md` v1.1.0 (und `.html`), `kurznachricht-gino.md` v1.1.0, `rev4/0übersicht.md` v1.1.0, `tools/check_bericht.py` v1.1.0 (Selbsttest grün, 0 Treffer in allen vier Dateien); unabhängige Prüfung N5 (31 Befunde, abgearbeitet); nicht gesendet.
+- **Rückweg:** Nicht versendet; frühere Fassungen in der Git-Historie von `yam2-docs`.
+- **Review bis:** vor dem Versand (Namens-Check mit `~/maskierung.txt`; Zählbasis der Kennzahlen und Vorschläge zu Frage 1 und 2 durch Ovaya) · Vertrauen: mittel
+
+## E-013 — Dokumentschichten Review und Plan        [Klasse A · Status: entschieden]
+- **Gino-Bezug:** alle Dokumente, die Gino erhält; Rundenübersicht `rev4/0übersicht.md`.
+- **Entscheidung:** Ovaya (12.10.2026): Es gibt zwei Dokumentschichten, Review und Plan. Review-Dokumente (Gegenstand: System oder Design; `schema.md`, `schema-diagramme.md`, `claude.md`, Adress-Design, `revN/0übersicht.md`) folgen `doku-paket/review-regelwerk.md` (RV-1 bis RV-14). Plan-Dokumente (Gegenstand: Vorgehen und Stand; Plan, ENTSCHEIDUNGEN, Zwischenbericht, Kurznachricht, Nachschlagewerk) folgen der Vorgabe (R-1 bis R-12) und E-012. Der Ablageort entscheidet nicht über die Schicht.
+- **Begründung:** Das Berichtsformat (E-012, R-4) passt auf Statusberichte, nicht auf Design- und Referenzdokumente, die Bezeichner, Stand und Quelle brauchen; frühere Review-Dokumente zeigen die Richtung (kurz, Fundstelle „Wo?“, Begründung je Entscheidung).
+- **Nächste Alternative:** ein Regelwerk mit Ausnahmen je Dokument · Wechselaufwand: Ausnahmen in R-4 und `check_bericht.py` pflegen · Auslöser: Gino wünscht ein einheitliches Format für alle Dokumente.
+- **Umsetzung/Test:** Doku-Paket `yam2-docs`: `review-regelwerk.md` v1.0.0, Vorgehensplan v1.4.0 (§0b, Q-13), Vorgabe v1.5.0 (Z-13), `tools/check_bericht.py` v1.2.0 (`--profil review`, Profil `plan` unverändert), `rev4/0übersicht.md` v2.0.0 nach RV-5a.
+- **Rückweg:** Profil `plan` ist unverändert; frühere Fassungen in der Git-Historie von `yam2-docs`.
+- **Review bis:** nach der ersten Rückmeldung von Gino auf eine Rundenübersicht nach dem neuen Regelwerk · Vertrauen: mittel (Regelwerk bisher nur an `rev4/0übersicht.md` erprobt)

@@ -1,9 +1,13 @@
-<!-- adress-design.md — v4.2.0 — Doku-Nachzug: Namen nach Umbenennung (E-004, E-009, E-011), ist_sitz umgesetzt (E-001), vereinssitz_adresse_id entfernt, DDL §4.4 aus dem Datenbankprojekt (Commit d1dfd1b), Stand der Umsetzung (§10) -->
+<!-- adress-design.md — v4.2.4 — §7 #1 und #2: Altnamen als „damals“ gekennzeichnet (Querprüfung Q-3); Versionsangabe im Kopf auf 4.2.4 (Q-4)
+<!-- vorher: adress-design.md — v4.2.3 — Stand-Nachzug: Immutable-Trigger in der Prüf-Datenbank belegt (§10); Status in §6 ohne Symbol; Hinweis zu den Symbolen in den älteren Änderungstabellen (§9) -->
+<!-- vorher: adress-design.md — v4.2.2 — Diagramme als Mermaid -->
+<!-- vorher: adress-design.md — v4.2.1 -->
+<!-- vorher: adress-design.md — v4.2.0 — Doku-Nachzug: Namen nach Umbenennung (E-004, E-009, E-011), ist_sitz umgesetzt (E-001), vereinssitz_adresse_id entfernt, DDL §4.4 aus dem Datenbankprojekt (Commit d1dfd1b), Stand der Umsetzung (§10) -->
 <!-- vorher: adress-design.md — v4.1.0 — Korrekturen aus eigener Prüfung: Overlap-Trigger (halb-offen), Immutable-Trigger (NULL-Fall), CHECK (bis > von); ist_sitz als abhängig von §7 #7 markiert; §7 #2 entschieden -->
 # yam2 — Adress-Infrastruktur
 
 **Stand:** 12.10.2026 (v4.2; Datenbankprojekt im Stand Commit `d1dfd1b`, Branch `feature/gruppe-sitzspalte-entfernen`)
-**Version:** 4.2 — v4.1 + Nachzug der Namen und des Umsetzungsstands
+**Version:** 4.2.4 — v4.1 + Nachzug der Namen und des Umsetzungsstands
 **Autor:** Ovaya
 
 Adress-Infrastruktur für yam2. Anforderung aus Teams-Gespräch 20.04.2026, Review-Feedback 06.05.2026.
@@ -20,7 +24,7 @@ Adress-Infrastruktur für yam2. Anforderung aus Teams-Gespräch 20.04.2026, Revi
 
 ---
 
-## 📋 Inhalt
+## Inhalt
 
 1. [Kontext & Auftrag](#1-kontext--auftrag)
 2. [Anwendungsfälle](#2-anwendungsfälle)
@@ -140,15 +144,63 @@ Folgegespräch vom **06.05.2026** (Review zu v3):
 
 ### 4.2 Beziehungen
 
+Nur Schlüssel und die Spalten, die eine Regel aus §3 tragen; alle Spalten in §4.4 und in `schema-diagramme.md` §5.
+
+```mermaid
+erDiagram
+    d_land ||--o{ d_ort : "land_id"
+    d_ort ||--o{ m_adresse : "ort_id"
+    m_adresse ||--o{ x_mitglied_adresse : "adresse_id"
+    m_mitglied ||--o{ x_mitglied_adresse : "mitglied_id"
+    d_objekttyp ||--o{ m_objekt : "typ_id"
+    m_adresse ||--o{ m_objekt : "adresse_id"
+    m_objekt ||--o{ x_objekt_gruppe : "objekt_id (CASCADE)"
+    d_gruppe ||--o{ x_objekt_gruppe : "ygrp_id"
+    d_land {
+        int land_id PK
+        char iso_code UK
+        nvarchar plz_regex "UC-9"
+    }
+    d_ort {
+        int ort_id PK
+        int land_id FK
+        varchar plz "VARCHAR(10)"
+    }
+    m_adresse {
+        int adresse_id PK
+        int ort_id FK
+        nvarchar hausnummer "NULL erlaubt, CHECK Mindestangabe"
+    }
+    x_mitglied_adresse {
+        int mitglied_adresse_id PK
+        int mitglied_id FK
+        int adresse_id FK
+        date gueltig_von "eingeschlossen"
+        date gueltig_bis "ausgeschlossen, NULL = offen"
+    }
+    m_mitglied {
+        int id PK
+    }
+    d_objekttyp {
+        int objekttyp_id PK
+    }
+    m_objekt {
+        int objekt_id PK
+        int typ_id FK
+        int adresse_id FK
+        bit ist_sitz "höchstens eine 1"
+    }
+    x_objekt_gruppe {
+        int objekt_id PK, FK
+        int ygrp_id PK, FK
+        nvarchar beschreibung "Freitext, E-002"
+    }
+    d_gruppe {
+        int id PK
+    }
 ```
-d_land ◄── d_ort ◄── m_adresse ◄── x_mitglied_adresse ──► m_mitglied
-                          ▲
-                          │
-d_objekttyp ◄── m_objekt ─┘
-                  ▲
-                  │
-                  └── x_objekt_gruppe ──► d_gruppe
-```
+
+Lesart: Ein Haushalt (UC-3) sind mehrere Zeilen in `x_mitglied_adresse` mit derselben `adresse_id`; ein Vereinsobjekt nutzt dieselbe Adress-Tabelle wie die Mitglieder.
 
 ### 4.3 Zentrale Konstrukte
 
@@ -160,7 +212,54 @@ d_objekttyp ◄── m_objekt ─┘
 - Dedupe-Index `uq_m_adresse_physisch` — identische Adressen nur einmal
 - Filter-Unique-Index `uq_m_objekt_sitz WHERE ist_sitz = 1` — höchstens ein Vereinssitz
 
-Constraint- und Indexnamen der Tabelle `x_mitglied_adresse` tragen noch den früheren Tabellennamen (`pk_x_gl_adresse`, `uq_x_gl_adresse_aktiv`, `ix_x_gl_adresse_zeitraum`, `ck_x_gl_adresse_zeitraum`, `fk_x_gl_adresse_gl`, `fk_x_gl_adresse_adresse`): Sie sollen gebündelt in einer eigenen Umbenennung angepasst werden, bis dahin gelten diese Namen.
+**Gültigkeit beim Umzug (UC-2, UC-7):** Die alte Zeile endet an dem Tag, an dem die neue beginnt. Weil `gueltig_bis` der erste Tag ohne Gültigkeit ist, berühren sich die Zeiträume, ohne sich zu überlappen (Beispieldaten).
+
+```mermaid
+gantt
+    title Ein Mitglied, zwei Adressen, halb-offene Zeiträume [von, bis)
+    dateFormat YYYY-MM-DD
+    axisFormat %m.%Y
+    section Erlaubt
+    Adresse A, bis = 01.06.     :a1, 2025-01-01, 2025-06-01
+    Adresse B, offen (bis NULL) :a2, 2025-06-01, 2025-12-31
+    section Abgelehnt vom Trigger
+    Adresse C, beginnt 01.05.   :crit, c1, 2025-05-01, 2025-08-01
+```
+
+**Schutz beim Schreiben in `x_mitglied_adresse`:** Drei Prüfungen; jede deckt einen Fall ab, den die anderen nicht erkennen. CHECK und Index prüft die Datenbank in der Anweisung selbst (ihre Reihenfolge untereinander ist nicht festgelegt), den AFTER-Trigger danach.
+
+```mermaid
+flowchart TD
+    W["INSERT oder UPDATE<br/>auf x_mitglied_adresse"] --> C{"bis > von<br/>oder bis NULL?"}
+    C -- "nein (CHECK ck_x_gl_adresse_zeitraum)" --> E1["Fehler: leerer oder<br/>umgekehrter Zeitraum (V3)"]
+    C -- ja --> U{"zweite offene<br/>Zeile?"}
+    U -- "ja (Index uq_x_gl_adresse_aktiv)" --> E2["Fehler 2601:<br/>zweite aktive Adresse"]
+    U -- nein --> T{"Überlappung?<br/>a.von < b.bis und<br/>b.von < a.bis"}
+    T -- "ja (tr_x_mitglied_adresse_no_overlap)" --> E3["RAISERROR und<br/>ROLLBACK"]
+    T -- nein --> OK["gespeichert"]
+```
+
+**Korrektur einer Adresse (Tippfehler) statt Umzug:** `m_adresse` ist unveränderlich; der einzige Weg ist die Prozedur, die für die Dauer des UPDATE ein Kennzeichen in der Sitzung setzt (V2).
+
+```mermaid
+sequenceDiagram
+    participant A as Anwendung
+    participant P as sp_adresse_korrigieren
+    participant T as tr_m_adresse_immutable
+    participant M as m_adresse
+    A->>M: UPDATE direkt
+    M->>T: INSTEAD OF UPDATE
+    T-->>A: Fehler „m_adresse ist immutable“ (Kennzeichen fehlt oder NULL)
+    A->>P: EXEC mit adresse_id und neuen Werten
+    P->>P: SET CONTEXT_INFO 'adresse_korrektur'
+    P->>M: UPDATE
+    M->>T: INSTEAD OF UPDATE
+    T->>M: Kennzeichen passt, Werte übernehmen
+    P->>P: SET CONTEXT_INFO 0x00 (auch im CATCH)
+    P-->>A: fertig
+```
+
+Constraint- und Indexnamen der Tabelle `x_mitglied_adresse` tragen noch den früheren Tabellennamen (`pk_x_gl_adresse`, `uq_x_gl_adresse_aktiv`, `ix_x_gl_adresse_zeitraum`, `ck_x_gl_adresse_zeitraum`, `fk_x_gl_adresse_gl`, `fk_x_gl_adresse_adresse`): Diese sollen gebündelt in einer eigenen Umbenennung angepasst werden, bis dahin gelten diese Namen.
 
 ### 4.4 Vollständige DDL
 
@@ -546,6 +645,14 @@ Nur in v3 vorgesehen und durch `m_objekt` ersetzt: die Tabellen `m_vereinsheim` 
 | 5 | Stichtag: `DROP COLUMN` der alten Adress-Spalten in `m_mitglied` (`str`, `plz`, `ort`) über bestehendes SSDT-Projekt | Ja | offen |
 | 6 | (optional) Whitespace-normalisierte Computed Columns + Unique Index — siehe §6.1 | Nein | offen (§7 #9) |
 
+```mermaid
+flowchart LR
+    P1["1 DDL<br/>Projekt ✓, Probelauf ✓"] --> P2["2 Daten übernehmen<br/>offen"]
+    F{{"Ginos Freigabe der Konzepte"}} -.-> P3
+    P2 --> P3["3 Repository<br/>offen"] --> P4["4 Oberfläche<br/>offen"] --> P5["5 Altspalten entfernen<br/>Breaking, offen"]
+    P5 -.-> P6["6 Whitespace-Normalisierung<br/>optional, offen"]
+```
+
 **Typ-Hinweis Phase 2:** `m_mitglied.str` ist `NVARCHAR(100) nullable`, `m_adresse.strasse` ist `NVARCHAR(100) NOT NULL`. Beim Migrieren muss ein nicht-null `str` vorhanden sein — andernfalls keinen `m_adresse`-Eintrag anlegen.
 
 </details>
@@ -577,7 +684,7 @@ CREATE UNIQUE INDEX uq_m_adresse_physisch_norm
     ON [yam3].[m_adresse] (strasse_norm, hausnummer_norm, ort_id, adresszusatz_norm);
 ```
 
-**Status:** 🟢 Nicht umgesetzt (geplant, Entscheidung zu §7 #9: Phase 6 nach stabiler Hauptmigration). Aktivierung erfolgt nach Phase 5, sofern erwünscht.
+**Status:** Nicht umgesetzt (geplant, Entscheidung zu §7 #9: Phase 6 nach stabiler Hauptmigration). Aktivierung erfolgt nach Phase 5, sofern erwünscht.
 
 **Nutzen:** Real beobachtbares Problem bei manuellen Eingaben und CSV-Importen. PERSISTED Computed Columns sind in SQL Server gut indexierbar. Aufwand klein, Nutzen mittel.
 
@@ -599,7 +706,7 @@ CREATE TABLE [yam3].[m_objekt_extra] (
 );
 ```
 
-**Status:** 🟢 Nicht umgesetzt (Entwurf). Aktivierung erst, wenn ein konkreter typ-spezifischer Erweiterungsbedarf vorliegt. Sollten echte Subtypen verlangt sein, wäre alternativ eine separate Spezialisierungstabelle pro Typ (z.B. `m_objekt_sporthalle`) sinnvoller — Entscheidung dann situationsabhängig.
+**Status:** Nicht umgesetzt (Entwurf). Aktivierung erst, wenn ein konkreter typ-spezifischer Erweiterungsbedarf vorliegt. Sollten echte Subtypen verlangt sein, wäre alternativ eine separate Spezialisierungstabelle pro Typ (z.B. `m_objekt_sporthalle`) sinnvoller — Entscheidung dann situationsabhängig.
 
 </details>
 
@@ -612,8 +719,8 @@ CREATE TABLE [yam3].[m_objekt_extra] (
 
 | # | Frage | Stand |
 |---|---|---|
-| 1 | `m_gl` langfristig → `m_mitglied` umbenennen, mit allen FK-Spalten `gl_id → mitglied_id` | **Entschieden und im Projekt umgesetzt** (nicht in einer späteren Migration, sondern vor dem ersten Rollout; Probelauf bestanden, Team-Datenbank offen, §10) |
-| 2 | ~~Bestehende `m_gl`-Kürzel (`vn`, `nn`, `tel`, `mail`, `geb`) jetzt ausschreiben oder später~~ | **Entschieden (v4.1) und umgesetzt:** Kürzel sind ausgeschrieben (Zuordnung §4.5), Ginos Anregung vom 20.04. |
+| 1 | `m_gl` (damals) langfristig → `m_mitglied` umbenennen, mit allen FK-Spalten `gl_id → mitglied_id` (damals; Zuordnung alt → neu §4.5) | **Entschieden und im Projekt umgesetzt** (nicht in einer späteren Migration, sondern vor dem ersten Rollout; Probelauf bestanden, Team-Datenbank offen, §10) |
+| 2 | ~~Bestehende `m_gl`-Kürzel (damals: `vn`, `nn`, `tel`, `mail`, `geb`) jetzt ausschreiben oder später~~ | **Entschieden (v4.1) und umgesetzt:** Kürzel sind ausgeschrieben (Zuordnung §4.5), Ginos Anregung vom 20.04. |
 | 3 | `d_ort` vorbefüllen (~8000 DE-PLZ) oder on-demand beim Speichern anlegen | **Offen.** Vorschlag unverändert: On-demand, wächst organisch |
 | 4 | PLZ-Validierung per `d_land.plz_regex` in UI-Schicht aktivieren | **Offen.** Vorschlag unverändert: Ja, verhindert Müll-Daten |
 | 5 | DSGVO-Anonymisierung: Felder auf NULL oder Platzhalter ("anonymisiert") | **Offen.** Vorschlag unverändert: Platzhalter, bessere Diagnose in Listen |
@@ -667,11 +774,15 @@ Die Struktur ist so gewählt, dass jedes dieser Themen ohne Breaking Change erg�
 | N5 | V1 bis V3 (Trigger, NULL-Fall, CHECK `>`) sind im Projekt umgesetzt und mit Testfällen geprüft (Probelauf) | §4.3, §10 | Stand |
 | N6 | Entscheidungen zu §7 #1, #2, #7, #8, #9 eingetragen; #3 bis #6 bleiben offen | §7 | Stand |
 | N7 | Neu §10 „Stand der Umsetzung“; Phasentabelle in §5 um Spalte „Stand“ ergänzt; §3 zählt 18 statt 16 Entscheidungen | §3, §5, §10 | Stand |
+| N8 | Diagramme: Beziehungen als ER-Diagramm (ersetzt die Textskizze), Gültigkeit beim Umzug, Schutzprüfungen beim Schreiben, Korrekturweg über die Prozedur, Phasenfolge; nur Darstellung, keine neue Aussage | §4.2, §4.3, §5 | Darstellung |
+| N9 | Stand-Nachzug: Immutable-Trigger in der Prüf-Datenbank belegt (§10); Status in §6 ohne Symbol; Symbole in den älteren Tabellen als Verlauf gekennzeichnet | §6, §9, §10 | Stand |
 
 </details>
 
 <details>
 <summary>v4 → v4.1: 5 Korrekturen aus eigener Prüfung (30.09.2026)</summary>
+
+Die Symbole in der Spalte „Schwere“ stehen so seit den Fassungen v4 und v4.1, die Gino kennt; sie bleiben als Verlauf unverändert.
 
 | # | Änderung | Betrifft | Schwere |
 |---|---|---|---|
@@ -688,6 +799,8 @@ Die Struktur ist so gewählt, dass jedes dieser Themen ohne Breaking Change erg�
 <details>
 <summary>v3 → v4: 5 Änderungen aus Gino-Feedback vom 06.05.2026</summary>
 
+Die Symbole in der Spalte „Schwere“ stehen so seit den Fassungen v4 und v4.1, die Gino kennt; sie bleiben als Verlauf unverändert.
+
 | # | Änderung | Betrifft | Schwere |
 |---|---|---|---|
 | 1 | `m_vereinsheim` und `m_sportstaette` zusammengeführt zu `m_objekt` + `d_objekttyp` | §3, §4.1, §4.2, §4.4 | 🔴 Strukturell |
@@ -703,7 +816,7 @@ Die Struktur ist so gewählt, dass jedes dieser Themen ohne Breaking Change erg�
 ## 10. Stand der Umsetzung
 
 <details>
-<summary>Je Punkt aus Ihrem Feedback: Projekt, Probelauf, Team-Datenbank</summary>
+<summary>Je Punkt aus Ginos Feedback: Projekt, Probelauf, Team-Datenbank</summary>
 
 Spalten: **Projekt** = im Datenbankprojekt (Stand `d1dfd1b`) · **Probelauf** = auf einer Probe-Datenbank veröffentlicht und geprüft (nicht auf der Team-Datenbank) · **Team-Datenbank** = auf der produktiven Datenbank. ✓ erreicht · – noch nicht · ? nicht belegt. Die Belege (Beleg P5-n) liegen intern vor und nennen je Aussage Quelle und Fundstelle.
 
@@ -712,7 +825,7 @@ Spalten: **Projekt** = im Datenbankprojekt (Stand `d1dfd1b`) · **Probelauf** = 
 | Kürzel ausschreiben (20.04., 23.04.) | 49 Umbenennungen, u. a. `m_mitglied`, `d_gruppe`, `x_mitglied_adresse` (§4.5) | ✓ | ✓ (Rückweg getestet) | – (wartet auf Ginos Freigabe, dann Rollout) | P5-1 |
 | Vereinssitz, Vereinsheim, Sportstätte zusammenführen und verknüpfen (UC-4 bis UC-6; 06.05.) | `d_objekttyp`, `m_objekt` mit `ist_sitz`, `x_objekt_gruppe` | ✓ | ✓ (Sitz: erster OK, zweiter Fehler 2601; Verknüpfung getestet) | – (nach dem Rollout der Umbenennung; Reihenfolge entschieden) | P5-2 |
 | Intervall-Überlappung im DDL schützen (06.05.) | Trigger `tr_x_mitglied_adresse_no_overlap`, CHECK `ck_x_gl_adresse_zeitraum` mit `>` | ✓ | ✓ (10 von 10 Testfällen: Umzug erlaubt, Überlappungen und leerer Zeitraum abgelehnt) | – (zusammen mit den Sportstätten) | P5-3 |
-| Immutable `m_adresse`, Korrektur nur über SP (V2) | `tr_m_adresse_immutable` mit NULL-Zweig, `sp_adresse_korrigieren` | ✓ | ? (kein eigener Probelauf-Beleg für den Trigger) | – (die Prozedur kommt laut Plan mit dem Rollout; der Trigger: ?) | P5-4 |
+| Immutable `m_adresse`, Korrektur nur über SP (V2) | `tr_m_adresse_immutable` mit NULL-Zweig, `sp_adresse_korrigieren` | ✓ | ✓ (Prüf-Datenbank aus dem Projektstand: direktes `UPDATE` abgelehnt, Korrektur über die Prozedur erlaubt; Schutz gegen Löschen nicht geprüft) | – (Trigger und Prozedur kommen mit dem Rollout) | P5-4 |
 | `vereinssitz_adresse_id` entfällt (v4) | Spalte und Fremdschlüssel aus dem Projekt entfernt; Spalte war leer | ✓ | ✓ | – (eigener kleiner Rollout, Sperre gegen Datenverlust einmalig aus) | P5-5 |
 | Adress-Kern: `d_land`, `d_ort`, `m_adresse`, `x_mitglied_adresse` | DDL in §4.4 | ✓ | ✓ (durch die Testfälle der Intervall-Prüfung) | ? (Abgleich mit dem Inventar der Team-Datenbank steht aus) | P5-6 |
 | Adress-Umsetzung Phasen 2 bis 5 (§5): Daten übernehmen, Repository, UI, Altspalten | – | – | – | – (wartet auf Ginos Freigabe der Konzepte) | P5-7 |

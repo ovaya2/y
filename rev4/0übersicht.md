@@ -1,73 +1,34 @@
-<!-- 0übersicht.md — v1.1.0 — rev4, Teil 1: Ginos Rückmeldungen und Stand der Umsetzung; v1.1.0: Befunde der unabhängigen Prüfung eingearbeitet (Statusdefinition, Zählweise, Team-Datenbank, Gruppierung) -->
-# Rückmeldungen → Stand der Umsetzung
+<!-- 0übersicht.md — v2.0.0 — rev4, Teil 1: Rückmeldungen → Stand; v2.0.0: nach dem Review-Regelwerk (review-regelwerk.md RV-5a, E-013) neu gebaut: eine Tabelle Rückmeldung | umgesetzt? | Wo?, Fragen nur zu Punkten der Tabelle; Kennzahlen, Zählweise und Statuslegende entfallen (stehen im Zwischenbericht); Zeilen 1–12 inhaltlich wie v1.1.0 (Beleg-Tabelle BT-08 bis BT-25) -->
+# Rückmeldungen → Stand der Umsetzung (Runde 4)
 
-Übersicht zu den Rückmeldungen und Anforderungen aus den bisherigen Gesprächen mit Ergebnis und Status. Die Übersicht bleibt ohne Details; Nachweise liegen vor und werden auf Nachfrage erklärt.
+**Stand:** 12.10.2026 · **Version:** 2.0 · **Bezug:** Rückmeldungen vom 01.04., 20.04., 23.04. und 06.05.2026; Begleitdokumente in dieser Runde: Adress-Design 4.2 (`rev4/adress-design.md`), Entscheidungsprotokoll (`rev4/ENTSCHEIDUNGEN.md`, E-nnn), Schema (`schema.md`).
 
-Status in dieser Übersicht:
+## A. Auf einen Blick
 
-- **im Probelauf bestanden**: umgesetzt und auf einer Probe-Datenbank geprüft; die Team-Datenbank ist unverändert.
-- **abgeschlossen**: Die Arbeit ist erledigt; eine noch offene Freigabe ist dabei angegeben.
-- **wartet auf Entscheidung**: Rückmeldung von Gino nötig (Fragen im letzten Abschnitt).
+✓ Probelauf = im Datenbankprojekt bzw. Arbeitszweig umgesetzt und auf einer Probe-Datenbank geprüft. Die Team-Datenbank ist noch ohne Rollout.
 
-Zählweise: Gezählt sind die einzelnen Punkte aus den Rückmeldungen, wie sie in Teil 1 aufgeführt sind; ein Punkt kann mehrere Arbeitsschritte bündeln.
-
-## Überblick
-
-| Kennzahl | Wert |
-|---|---|
-| Punkte aus den Rückmeldungen | 12 |
-| im Probelauf bestanden | 7 |
-| abgeschlossen (Freigabe der Konzepte offen) | 2 |
-| wartet auf Entscheidung | 1 |
-| zurückgestellt (vorläufig entschieden) | 1 |
-| laufend | 1 |
-| Fragen an Gino | 6 |
-| Team-Datenbank | kein Rollout; Stand der alten Namen |
-
-## Teil 1: Ginos Rückmeldungen → Stand
-
-### Erste Rückmeldung (Hinweise zur Anwendung)
-
-| Nr | Rückmeldung | Stand | Status |
+| Nr | Rückmeldung (sinngemäß) | umgesetzt? | Wo? |
 |---|---|---|---|
-| 1 | Hinweise 1 bis 7: Normalisierung, Fremdschlüssel und Löschweitergabe, Typzuordnung, Modell aus mehreren Tabellen, Trennung von Datenzugriff und Modell, Datenbankprojekt, Ausführung und Trigger | im Arbeitszweig eingearbeitet | im Probelauf bestanden |
-| 2 | Hinweis 8: Indizes („Key-Index“) | Bedeutung ist ungeklärt; Frage 6 unten | wartet auf Entscheidung |
+| 1 | Hinweise 1–7 (01.04.): Normalisierung, Fremdschlüssel und Löschweitergabe, Typzuordnung, Modell aus mehreren Tabellen, Datenzugriff getrennt vom Modell, Datenbankprojekt, Trigger | ✓ Probelauf | Arbeitszweig (Code); Datenbankprojekt: `schema.md` |
+| 2 | Hinweis 8 (01.04.): Key-Index | – offen (B2) | E-008 |
+| 3 | Kürzel in den Namen ausschreiben (20.04., 23.04.) | ✓ Probelauf: 49 Umbenennungen, Rückweg getestet; einzelne Kürzel bleiben vorerst | `schema.md` §3; Adress-Design §4.5; E-004 |
+| 4 | Adress-Design: Anwendungsfälle, Logik, Datenbank (20.04.) | ✓ abgeschlossen: Fassung 4.2; Freigabe offen (B1) | Adress-Design §2–§4, §9 |
+| 5 | Arbeitsweise: Anforderung → Spezifikation → Datenbank → Code, kein großer Prototyp (23.04.) | laufend: kleine Prüfläufe auf der Probe-Datenbank, Entscheidungsprotokoll | `ENTSCHEIDUNGEN.md` |
+| 6 | Postleitzahl als Textfeld, Adressen mit Gültigkeitszeiträumen (06.05.) | ✓ abgeschlossen: unverändert übernommen | Adress-Design §3, §4.4 |
+| 7 | Sportstätte: Verknüpfung mit der Aktivität fehlt (06.05.) | ✓ Probelauf: Vereinsobjekt ↔ Gruppe mit Beschreibung | Adress-Design §4.4 (`x_objekt_gruppe`); E-002 |
+| 8 | Vereinsheim und Sportstätte zusammenführen; Vereinssitz (06.05.) | ✓ Probelauf: eine Tabelle mit Typ; Sitz als Kennzeichen, höchstens einer | Adress-Design §4.4 (`m_objekt`, `ist_sitz`), §7 #7; E-001, E-009 |
+| 9 | Überlappende Adress-Zeiträume in der Datenbank verhindern (06.05.) | ✓ Probelauf: Überlappungsschutz und „Ende nach Beginn“, 10 von 10 Testfällen | Adress-Design §4.3, §4.4 (`tr_x_mitglied_adresse_no_overlap`); E-011 |
+| 10 | Whitespace-Normalisierung der Adressen (06.05.) | zurückgestellt: optionale Phase 6 | Adress-Design §6.1, §7 #9; E-003 |
+| 11 | Vereinssitz-Spalte bei den Gruppen entfällt (Folge aus 8) | ✓ Probelauf: aus dem Datenbankprojekt entfernt, Spalte war leer | Adress-Design §9, §10 |
+| 12 | Gruppenverwaltung | ✓ Probelauf: Umbenennung übernommen, Regressionstest ohne Namensfehler | Arbeitszweig (Code) |
 
-### Gespräch zur Adress-Anforderung
+Stand je Punkt mit Probelauf und Team-Datenbank: Adress-Design §10.
 
-| Nr | Anforderung | Stand | Status |
-|---|---|---|---|
-| 3 | Kürzel in den Namen ausschreiben | 49 Umbenennungen in mehreren Wellen; Regressionstest ohne Namensfehler; Rückweg getestet; einzelne Kürzel bleiben vorerst bestehen | im Probelauf bestanden |
-| 4 | Adress-Design: Anwendungsfälle, Logik, Datenbank-Design | Fassung nach der Rückmeldung zu Version 3 und Korrekturen aus eigener Prüfung liegen vor; der Nachzug der Namen und des Umsetzungsstands liegt als Entwurf vor | abgeschlossen; Freigabe der Konzepte offen |
-| 5 | Arbeitsweise: Anforderung, Spezifikation, Datenbank, dann Code; kein großer Prototyp | eingehalten: kleine Prüfläufe auf der Probe-Datenbank, Freigabeschritte, Entscheidungsprotokoll | laufend |
+## B. Offen
 
-### Rückmeldung zum Adress-Design (Version 3)
+| Nr | Frage | Vorschlag |
+|---|---|---|
+| B1 | Freigabe der Adress-Konzepte (Adress-Design 4.2)? | freigeben; Datenzugriff und Oberfläche für Adressen und Sportstätten setzen die Freigabe voraus |
+| B2 | Hinweis 8 („Key-Index“): Indizes auf Status und „erledigt“ oder eine Key-Index-Tabelle? | Indizes anlegen (vorläufig entschieden, E-008) |
 
-| Nr | Rückmeldung | Stand | Status |
-|---|---|---|---|
-| 6 | Postleitzahl als Textfeld mit Gültigkeitszeiträumen: bestätigt | unverändert übernommen | abgeschlossen |
-| 7 | Sportstätte: Verknüpfung mit der Aktivität fehlte | Verknüpfung zwischen Vereinsobjekt und Gruppe mit Beschreibung; Prüfläufe bestanden | im Probelauf bestanden |
-| 8 | Vereinsheim und Sportstätte zusammenführen; Vereinssitz | gemeinsame Tabelle für Vereinsobjekte mit Typ-Auswahl; der Vereinssitz ist ein Kennzeichen, die Datenbank erlaubt höchstens einen Sitz | im Probelauf bestanden |
-| 9 | Überlappung von Adress-Zeiträumen in der Datenbank verhindern | Überlappungsschutz und Prüfung „Ende nach Beginn“; 10 von 10 Testfällen bestanden (Umzug bleibt erlaubt, Überlappung und leerer Zeitraum werden abgelehnt) | im Probelauf bestanden |
-| 10 | Whitespace-Normalisierung (optional) | als spätere, optionale Phase vorgesehen; vorläufig entschieden, nicht umgesetzt | zurückgestellt |
-| 11 | Vereinssitz-Spalte bei den Gruppen entfällt | aus dem Datenbankprojekt entfernt; die Spalte war leer; auf der Team-Datenbank erfolgt die Entfernung später in einem eigenen Schritt | im Probelauf bestanden |
-### Weitere Aufgaben
-
-| Nr | Aufgabe | Stand | Status |
-|---|---|---|---|
-| 12 | Gruppenverwaltung | Umbenennung im Arbeitszweig übernommen; Regressionstest ohne Namensfehler | im Probelauf bestanden |
-
-## Wartet auf Gino
-
-Format je Frage: Optionen, Empfehlung, Antwort „Ja“ oder Alternative.
-
-| Nr | Frage | Optionen | Empfehlung |
-|---|---|---|---|
-| 1 | Freigabe der Adress-Konzepte (Adress-Design) | freigeben; oder Änderungswünsche nennen | Vorschlag: freigeben; die Anwendungsteile (Datenzugriff und Oberfläche) für Adressen und Sportstätten setzen die Freigabe voraus |
-| 2 | Rolle „Leser“ darf Mitglieder und Gebühren anlegen: Fehler oder gewollt? | Rechte entziehen (die Beschreibung der Rolle lautet Lesezugriff); oder die Beschreibung anpassen | Vorschlag: Rechte entziehen |
-| 3 | Rollen-Zuweisung an Benutzer fehlt in der Oberfläche (heute nur über die Datenbank) | Mehrfachauswahl im Benutzer-Dialog; oder eigener Dialog „Rollen zuweisen“ | Mehrfachauswahl im Benutzer-Dialog |
-| 4 | Austrittsdatum: Beim Wechsel des Status auf „Ausgetreten“ über Bearbeiten bleibt das Datum leer | der Statuswechsel setzt das Datum; oder der Dialog verlangt das Datum | keine Empfehlung; fachliche Entscheidung |
-| 5 | Zahlung und Gebühren: Eine Zahlung gehört zu genau einer Gebühr; eine Überzahlung wird als negativer Saldo gebucht | Überzahlung auf Gebühren verteilen; oder wie bisher als negativen Saldo führen | keine Empfehlung; fachliche Entscheidung |
-| 6 | Hinweis 8 („Key-Index“): Was ist gemeint? | Indizes auf Status und „erledigt“ anlegen; oder eine Key-Index-Tabelle ist gemeint | Indizes anlegen (vorläufige Entscheidung) |
-
-Dieses Dokument enthält Teil 1.
+Weitere Fragen (Rolle „Leser“, Rollen-Zuweisung, Austrittsdatum, Überzahlung) stehen im Zwischenbericht, Abschnitt 4.

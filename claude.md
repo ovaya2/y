@@ -1,9 +1,9 @@
-<!-- claude.md — v3.0.1 — Veröffentlichungsfassung: Hinweis zum Stand des Hauptzweigs bei I-16 entfällt (kein Hinweis auf noch aktive Sonderregeln in einem öffentlichen Dokument); vorher v3.0.0 — Inventur aus dem Code im Stand d1dfd1b: Klassen und Muster geprüft, Namenskonvention DB neu (Umbenennung), Zählwerte wie schema.md, Issues mit Status und Fundstelle (inkl. B-11 bis B-14); Namen der Datenbank maskiert -->
+<!-- claude.md — v3.0.2 — sichtbare Versionsangabe im Kopf (Querprüfung Q-4); vorher v3.0.1 — Veröffentlichungsfassung: Hinweis zum Stand des Hauptzweigs bei I-16 entfällt (kein Hinweis auf noch aktive Sonderregeln in einem öffentlichen Dokument); vorher v3.0.0 — Inventur aus dem Code im Stand d1dfd1b: Klassen und Muster geprüft, Namenskonvention DB neu (Umbenennung), Zählwerte wie schema.md, Issues mit Status und Fundstelle (inkl. B-11 bis B-14); Namen der Datenbank maskiert -->
 <!-- vorher: claude.md (Stand 2026-04-01, `y`/claude.md) -->
 # CLAUDE.md — yam2 Vereinsverwaltung
 
 > Kontext-Anker für alle Claude-Sessions.
-> Stand: 12.10.2026 · Quellstand Code: Branch `feature/gruppe-sitzspalte-entfernen`, Commit `d1dfd1b`
+> Version: 3.0.2 · Stand: 12.10.2026 · Quellstand Code: Branch `feature/gruppe-sitzspalte-entfernen`, Commit `d1dfd1b`
 > Schema → `schema.md` (aus der DDL erzeugt) und `schema-diagramme.md` | Adress-Design → `rev4/adress-design.md` | Entscheidungen → `rev4/ENTSCHEIDUNGEN.md`
 > Jede Aussage hier ist am Quellstand geprüft; Abweichungen zur Fassung vom 01.04.2026 stehen in §8.
 
